@@ -2,3 +2,9 @@
 .idea/
 work/
 target/
+*.class
+
+# Package Files #
+*.jar
+*.war
+*.ear
