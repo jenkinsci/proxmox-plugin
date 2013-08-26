@@ -18,22 +18,25 @@ import org.kohsuke.stapler.DataBoundConstructor;
 
 public class VirtualMachineSlave extends Slave {
 
-    private String 				datacenterDescription;
-    private String 				snapshotName;
-    private String 				virtualMachineName;
-    private int 				startupWaitingPeriodSeconds;
+    private String datacenterDescription;
+    private String datacenterNode;
+    private String snapshotName;
+    private String virtualMachineName;
+    private int startupWaitingPeriodSeconds;
 
     @DataBoundConstructor
     public VirtualMachineSlave(String name, String nodeDescription, String remoteFS, String numExecutors,
                                Mode mode, String labelString, ComputerLauncher delegateLauncher,
                                RetentionStrategy retentionStrategy, List<? extends NodeProperty<?>> nodeProperties,
-                               String datacenterDescription, String virtualMachineName, String snapshotName, int startupWaitingPeriodSeconds)
+                               String datacenterDescription, String datacenterNode, String virtualMachineName,
+                               String snapshotName, int startupWaitingPeriodSeconds)
             throws
             Descriptor.FormException, IOException {
         super(name, nodeDescription, remoteFS, numExecutors, mode, labelString,
-                new VirtualMachineLauncher(delegateLauncher, datacenterDescription, virtualMachineName, snapshotName, startupWaitingPeriodSeconds),
+                new VirtualMachineLauncher(delegateLauncher, datacenterDescription, datacenterNode, virtualMachineName, snapshotName, startupWaitingPeriodSeconds),
                 retentionStrategy, nodeProperties);
         this.datacenterDescription = datacenterDescription;
+        this.datacenterNode = datacenterNode;
         this.virtualMachineName = virtualMachineName;
         this.snapshotName = snapshotName;
         this.startupWaitingPeriodSeconds = startupWaitingPeriodSeconds;
@@ -41,6 +44,10 @@ public class VirtualMachineSlave extends Slave {
 
     public String getDatacenterDescription() {
         return datacenterDescription;
+    }
+
+    public String getDatacenterNode() {
+        return datacenterNode;
     }
 
     public String getVirtualMachineName() {
@@ -70,6 +77,7 @@ public class VirtualMachineSlave extends Slave {
     public static final class DescriptorImpl extends SlaveDescriptor {
 
         private String datacenterDescription;
+        private String datacenterNode;
         private String virtualMachineName;
         private String snapshotName;
 
@@ -100,6 +108,10 @@ public class VirtualMachineSlave extends Slave {
 
         public String getDatacenterDescription() {
             return datacenterDescription;
+        }
+
+        public String getDatecenterNode() {
+            return datacenterNode;
         }
 
         public String getVirtualMachineName() {

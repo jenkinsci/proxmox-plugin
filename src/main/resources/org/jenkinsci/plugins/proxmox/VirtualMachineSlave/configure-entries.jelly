@@ -1,13 +1,17 @@
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form" xmlns:sel="/lib/form">
-    <f:entry field="datacenterDescription" title="${%Datacenter}" help="/plugin/proxmox/help-proxmox-datacenterDescription.html">
+    <f:entry title="${%Datacenter}" field="datacenterDescription" help="/plugin/proxmox/help-vm-datacenterDescription.html">
         <f:select/>
+    </f:entry>
+
+    <f:entry title="${%Datacenter Node}" field="datacenterNode">
+        <f:textbox/>
     </f:entry>
 
     <f:entry title="${%Virtual Machine}" field="virtualMachineName">
         <f:textbox/>
     </f:entry>
 
-    <f:entry title="${%Revert Snapshot}" field="snapshotName" help="/plugin/proxmox/help-proxmox-snapshotName.html">
+    <f:entry title="${%Revert Snapshot}" field="snapshotName" help="/plugin/proxmox/help-vm-snapshotName.html">
         <f:textbox/>
     </f:entry>
 
@@ -15,7 +19,7 @@
         <f:textbox field="nodeDescription"/>
     </f:entry>
 
-    <f:entry title="${%Startup Idle (sec)}" field="startupWaitingPeriodSeconds" help="/plugin/proxmox/help-proxmox-waitingPeriod.html">
+    <f:entry title="${%Startup Idle (sec)}" field="startupWaitingPeriodSeconds" help="/plugin/proxmox/help-vm-waitingPeriod.html">
         <f:textbox default="60" checkUrl="'${rootURL}/plugin/proxmox/checkStartupWaitingPeriodSeconds?secsValue='+this.value"/>
     </f:entry>
 
