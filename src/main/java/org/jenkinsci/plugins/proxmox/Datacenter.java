@@ -1,5 +1,6 @@
 package org.jenkinsci.plugins.proxmox;
 
+import hudson.Util;
 import hudson.Extension;
 import hudson.model.Descriptor;
 import hudson.slaves.Cloud;
@@ -7,19 +8,21 @@ import hudson.model.Label;
 import hudson.slaves.NodeProvisioner;
 import hudson.util.FormValidation;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.logging.Level;
-import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 
-import javax.servlet.ServletException;
+import javax.security.auth.login.LoginException;
 
 import net.sf.json.JSONObject;
 
+import org.json.JSONException;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
+
+import net.elbandi.pve2api.Pve2Api;
 
 /**
  * Represents a Proxmox datacenter.
@@ -31,19 +34,17 @@ public class Datacenter extends Cloud {
     private final String hostname;
     private final String username;
     private final String realm;
-    private final String password;
-    private final String nodeIndex;
-    private transient String authTicket;
-    private transient String CSRFPreventionToken;
+    private final String password; //TODO: Use `Secret` to store the password.
+    private transient Pve2Api pve_api;
 
     @DataBoundConstructor
-    public Datacenter(String hostname, String username, String realm, String password, String nodeIndex) {
+    public Datacenter(String hostname, String username, String realm, String password) {
         super("Datacenter(proxmox)");
         this.hostname = hostname;
         this.username = username;
         this.realm = realm;
         this.password = password;
-        this.nodeIndex = nodeIndex;
+        this.pve_api = null;
     }
 
     public Collection<NodeProvisioner.PlannedNode> provision(Label label, int excessWorkload) {
@@ -70,17 +71,20 @@ public class Datacenter extends Cloud {
         return password;
     }
 
-    public String getNodeIndex() {
-        return nodeIndex;
-    }
-
     public String getDatacenterDescription() {
-        return getUsername() + "@" + getRealm() + " - " + getHostname() + "/" + getNodeIndex();
+        return username + "@" + realm + " - " + hostname;
     }
 
     @Override
     public DescriptorImpl getDescriptor() {
         return (DescriptorImpl) super.getDescriptor();
+    }
+
+    public Pve2Api proxmoxInstance() {
+        if (pve_api == null) {
+            pve_api = new Pve2Api(hostname, username, realm, password);
+        }
+        return pve_api;
     }
 
     @Extension
@@ -90,10 +94,9 @@ public class Datacenter extends Cloud {
         private String username;
         private String realm;
         private String password;
-        private String nodeIndex;
 
         public String getDisplayName() {
-            return "Proxmox datacenter";
+            return "Proxmox Datacenter";
         }
 
         @Override
@@ -102,68 +105,63 @@ public class Datacenter extends Cloud {
             username = o.getString("username");
             realm = o.getString("realm");
             password = o.getString("password");
-            nodeIndex = o.getString("nodeIndex");
             save();
             return super.configure(req, o);
         }
 
-        public FormValidation doTestConnection(
+        private FormValidation fieldNotSpecifiedError(String fieldName) {
+            return FormValidation.error(fieldName + " not specified");
+        }
+
+        private FormValidation emptyStringValidation(String fieldName, String value) {
+            if (Util.fixEmptyAndTrim(value) == null) return fieldNotSpecifiedError(fieldName);
+            else return FormValidation.ok();
+        }
+
+        public FormValidation doCheckHostname(@QueryParameter String value) {
+            return emptyStringValidation("Hostname", value);
+        }
+
+        public FormValidation doCheckUsername(@QueryParameter String value) {
+            return emptyStringValidation("Username", value);
+        }
+
+        public FormValidation doCheckRealm(@QueryParameter String value) {
+            return emptyStringValidation("Realm", value);
+        }
+
+        public FormValidation doCheckPassword(@QueryParameter String value) {
+            return emptyStringValidation("Password", value);
+        }
+
+        public FormValidation doTestConnection (
                 @QueryParameter String hostname, @QueryParameter String username, @QueryParameter String realm,
-                @QueryParameter String password, @QueryParameter String nodeIndex) throws Exception, ServletException {
+                @QueryParameter String password) {
             try {
-                if (hostname == null) {
-                    return FormValidation.error("Proxmox Hostname is not specified!");
+                if (hostname.isEmpty()) {
+                    return fieldNotSpecifiedError("Hostname");
                 }
-                if (username == null) {
-                    return FormValidation.error("Proxmox username is not specified!");
+                if (username.isEmpty()) {
+                    return fieldNotSpecifiedError("Username");
                 }
-                if (realm == null) {
-                    return FormValidation.error("Proxmox user realm is not specified!");
+                if (realm.isEmpty()) {
+                    return fieldNotSpecifiedError("Realm");
                 }
-                if (password == null) {
-                    return FormValidation.error("Proxmox password is not specified!");
-                }
-                if (nodeIndex == null) {
-                    return FormValidation.error("Proxmox node index is not specified!");
+                if (password.isEmpty()) {
+                    return fieldNotSpecifiedError("Password");
                 }
 
-                //TODO: Test the connection to the Proxmox cluster.
+                Pve2Api pve_api = new Pve2Api(hostname, username, realm, password);
+                pve_api.login();
+                return FormValidation.ok("Login successful");
 
-                return FormValidation.ok("OK: " + hostname);
-
-            } catch (UnsatisfiedLinkError e) {
-                LogRecord rec = new LogRecord(Level.WARNING, "Failed to connect to hypervisor. Check libvirt installation on jenkins machine!");
-                rec.setThrown(e);
-                rec.setParameters(new Object[]{hostname, username});
-                LOGGER.log(rec);
-                return FormValidation.error(e.getMessage());
-            } catch (Exception e) {
-                LogRecord rec = new LogRecord(Level.WARNING, "Failed to connect to hypervisor. Check libvirt installation on jenkins machine!");
-                rec.setThrown(e);
-                rec.setParameters(new Object[]{hostname, username});
-                LOGGER.log(rec);
-                return FormValidation.error(e.getMessage());
+            } catch(JSONException e) {
+                return FormValidation.error("Could not read server JSON response: " + e.getMessage());
+            } catch (LoginException e) {
+                return FormValidation.error("Invalid login credentials");
+            } catch (IOException e) {
+                return FormValidation.error("Error: " + e.getMessage());
             }
-        }
-
-        public String getHostname() {
-            return hostname;
-        }
-
-        public String getUsername() {
-            return username;
-        }
-
-        public String getRealm() {
-            return realm;
-        }
-
-        public String getPassword() {
-            return password;
-        }
-
-        public String getNodeIndex() {
-            return nodeIndex;
         }
 
     }
