@@ -1,18 +1,40 @@
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form" xmlns:sel="/lib/form">
+
+    <script type="text/javascript">var rootURL='${rootURL}';</script>
+    <script src="${rootURL}/plugin/proxmox/virtualMachineSlave.js" type="text/javascript" />
+
     <f:entry title="${%Datacenter}" field="datacenterDescription" help="/plugin/proxmox/help-vm-datacenterDescription.html">
-        <f:select/>
+        <f:select onchange="onChangeListBox('datacenterNode',[['desc',this]])" />
     </f:entry>
 
     <f:entry title="${%Datacenter Node}" field="datacenterNode">
-        <f:textbox/>
+        <select class="setting-input select" name="datacenterNode" value="${instance.datacenterNode}" onchange="onChangeListBox('virtualMachineId',[['desc','_.datacenterDescription'],['node',this]])">
+            <j:forEach var="node" items="${descriptor.getDatacenterNodes(it.datacenterDescription)}" varStatus="loop">
+                <option selected="${node==it.datacenterNode?'true':null}">
+                    ${node}
+                </option>
+            </j:forEach>
+        </select>
     </f:entry>
 
-    <f:entry title="${%Virtual Machine}" field="virtualMachineName">
-        <f:textbox/>
+    <f:entry title="${%Virtual Machine}" field="virtualMachineId">   <!--value="${instance.virtualMachineName}" -->
+        <select class="setting-input select" name="virtualMachineId" onchange="onChangeListBox('snapshotName',[['desc','_.datacenterDescription'],['node','datacenterNode'],['vmid',this]])">
+            <j:forEach var="vm" items="${descriptor.getQemuVirtualMachines(it.datacenterDescription, it.datacenterNode)}" varStatus="loop">
+                <option value="${vm.getValue()}" selected="${vm.getValue()==it.virtualMachineId?'true':null}">
+                    ${vm.getKey()}
+                </option>
+            </j:forEach>
+        </select>
     </f:entry>
 
     <f:entry title="${%Revert Snapshot}" field="snapshotName" help="/plugin/proxmox/help-vm-snapshotName.html">
-        <f:textbox/>
+        <select class="setting-input select" name="snapshotName" value="${instance.snapshotName}">
+            <j:forEach var="snapshot" items="${descriptor.getQemuSnapshotNames(it.datacenterDescription, it.datacenterNode, it.virtualMachineId)}" varStatus="loop">
+                <option selected="${snapshot==it.snapshotName?'true':null}">
+                    ${snapshot}
+                </option>
+            </j:forEach>
+        </select>
     </f:entry>
 
     <f:entry title="${%Description}" help="/help/system-config/master-slave/description.html">

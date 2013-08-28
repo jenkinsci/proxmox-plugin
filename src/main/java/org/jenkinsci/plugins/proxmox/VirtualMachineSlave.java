@@ -12,6 +12,8 @@ import hudson.slaves.RetentionStrategy;
 import hudson.util.ListBoxModel;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -21,23 +23,24 @@ public class VirtualMachineSlave extends Slave {
     private String datacenterDescription;
     private String datacenterNode;
     private String snapshotName;
-    private String virtualMachineName;
+    private Integer virtualMachineId;
     private int startupWaitingPeriodSeconds;
 
     @DataBoundConstructor
     public VirtualMachineSlave(String name, String nodeDescription, String remoteFS, String numExecutors,
                                Mode mode, String labelString, ComputerLauncher delegateLauncher,
                                RetentionStrategy retentionStrategy, List<? extends NodeProperty<?>> nodeProperties,
-                               String datacenterDescription, String datacenterNode, String virtualMachineName,
+                               String datacenterDescription, String datacenterNode, Integer virtualMachineId,
                                String snapshotName, int startupWaitingPeriodSeconds)
             throws
             Descriptor.FormException, IOException {
         super(name, nodeDescription, remoteFS, numExecutors, mode, labelString,
-                new VirtualMachineLauncher(delegateLauncher, datacenterDescription, datacenterNode, virtualMachineName, snapshotName, startupWaitingPeriodSeconds),
+                new VirtualMachineLauncher(delegateLauncher, datacenterDescription, datacenterNode, virtualMachineId,
+                        snapshotName, startupWaitingPeriodSeconds),
                 retentionStrategy, nodeProperties);
         this.datacenterDescription = datacenterDescription;
         this.datacenterNode = datacenterNode;
-        this.virtualMachineName = virtualMachineName;
+        this.virtualMachineId = virtualMachineId;
         this.snapshotName = snapshotName;
         this.startupWaitingPeriodSeconds = startupWaitingPeriodSeconds;
     }
@@ -50,8 +53,8 @@ public class VirtualMachineSlave extends Slave {
         return datacenterNode;
     }
 
-    public String getVirtualMachineName() {
-        return virtualMachineName;
+    public Integer getVirtualMachineId() {
+        return virtualMachineId;
     }
 
     public String getSnapshotName() {
@@ -78,7 +81,7 @@ public class VirtualMachineSlave extends Slave {
 
         private String datacenterDescription;
         private String datacenterNode;
-        private String virtualMachineName;
+        private Integer virtualMachineId;
         private String snapshotName;
 
         public DescriptorImpl() {
@@ -106,6 +109,32 @@ public class VirtualMachineSlave extends Slave {
             return items;
         }
 
+        //TODO: Possibly replace these with `doFillDatacenterNodeItems` function
+        public List<String> getDatacenterNodes(String datacenterDescription) {
+            Datacenter datacenter = getDatacenterByDescription(datacenterDescription);
+            if (datacenter != null) {
+                return datacenter.getNodes();
+            }
+            return new ArrayList<String>();
+        }
+
+        public HashMap<String, Integer> getQemuVirtualMachines(String datacenterDescription, String datacenterNode) {
+            Datacenter datacenter = getDatacenterByDescription(datacenterDescription);
+            if (datacenter != null) {
+                return datacenter.getQemuVirtualMachines(datacenterNode);
+            }
+            return new HashMap<String, Integer>();
+        }
+
+        public List<String> getQemuSnapshotNames(String datacenterDescription, String datacenterNode,
+                                                 Integer virtualMachineId) {
+            Datacenter datacenter = getDatacenterByDescription(datacenterDescription);
+            if (datacenter != null) {
+                return datacenter.getQemuVirtualMachineSnapshots(datacenterNode, virtualMachineId);
+            }
+            return new ArrayList<String>();
+        }
+
         public String getDatacenterDescription() {
             return datacenterDescription;
         }
@@ -114,8 +143,8 @@ public class VirtualMachineSlave extends Slave {
             return datacenterNode;
         }
 
-        public String getVirtualMachineName() {
-            return virtualMachineName;
+        public Integer getVirtualMachineId() {
+            return virtualMachineId;
         }
 
         public String getSnapshotName() {

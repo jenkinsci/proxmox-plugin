@@ -8,14 +8,13 @@ import hudson.util.ListBoxModel;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.servlet.ServletException;
 
 import org.kohsuke.stapler.QueryParameter;
-import org.kohsuke.stapler.StaplerRequest;
-import org.kohsuke.stapler.StaplerResponse;
 
 public class PluginImpl extends Plugin {
 
@@ -51,42 +50,66 @@ public class PluginImpl extends Plugin {
         }
     }
 
-    //TODO: Might not need the verbose "@QueryParameter" for the function arguments below...
-
-    //TODO: Get names of nodes on Proxmox.
-    public void doDatacenterNodeValues(StaplerRequest req, StaplerResponse rsp,
-                                       @QueryParameter("datacenterDescription") String datacenterDescription)
-            throws IOException, ServletException {
-        ListBoxModel m = new ListBoxModel();
-        String nodeName = "Some Test Node";
-        m.add(new ListBoxModel.Option(nodeName, nodeName));
-        m.get(0).selected = true;
-        m.writeTo(req, rsp);
+    private Datacenter getDatacenterByDescription(String datacenterDescription) {
+        for (Cloud cloud : Hudson.getInstance().clouds) {
+            if (cloud instanceof Datacenter) {
+                Datacenter datacenter = (Datacenter) cloud;
+                if (datacenterDescription != null
+                        && datacenterDescription.equals(datacenter.getDatacenterDescription())) {
+                    return datacenter;
+                }
+            }
+        }
+        return null;
     }
 
-    //TODO: Get names of virtual machines
-    public void doVirtualMachineNameValues(StaplerRequest req, StaplerResponse rsp,
-                                           @QueryParameter("datacenterDescription") String datacenterDescription,
-                                           @QueryParameter("datacenterNode") String datacenterNode)
+    public ListBoxModel doDatacenterNodeValues(@QueryParameter("desc") String datacenterDescription)
             throws IOException, ServletException {
+
         ListBoxModel m = new ListBoxModel();
-        String vmName = "Some Test Machine";
-        m.add(new ListBoxModel.Option(vmName, vmName));
-        m.get(0).selected = true;
-        m.writeTo(req, rsp);
+        Datacenter datacenter = getDatacenterByDescription(datacenterDescription);
+        if (datacenter != null) {
+            List<String> nodes = datacenter.getNodes();
+            for (String node : nodes) {
+                m.add(new ListBoxModel.Option(node));
+            }
+            if (!m.isEmpty()) m.get(0).selected = true;
+        }
+        return m;
     }
 
-    //TODO: Get the names of the virtual machines snapshots
-    public void doSnapshotNameValues(StaplerRequest req, StaplerResponse rsp,
-                                     @QueryParameter("datacenterDescription") String datacenterDescription,
-                                     @QueryParameter("datacenterNode") String datacenterNode,
-                                     @QueryParameter("virtualMachineName") String virtualMachineName)
+    public ListBoxModel doVirtualMachineIdValues(@QueryParameter("desc") String datacenterDescription,
+                                                 @QueryParameter("node") String datacenterNode)
             throws IOException, ServletException {
+
         ListBoxModel m = new ListBoxModel();
-        String snapshotName = "Some Test Snapshot";
-        m.add(new ListBoxModel.Option(snapshotName, snapshotName));
-        m.get(0).selected = true;
-        m.writeTo(req, rsp);
+        Datacenter datacenter = getDatacenterByDescription(datacenterDescription);
+        if (datacenter != null) {
+            Map<String, Integer> names = datacenter.getQemuVirtualMachines(datacenterNode);
+            for (Map.Entry<String, Integer> entry : names.entrySet()) {
+                m.add(new ListBoxModel.Option(entry.getKey(), entry.getValue().toString()));
+            }
+            if (!m.isEmpty()) m.get(0).selected = true;
+        }
+        return m;
+    }
+
+    public ListBoxModel doSnapshotNameValues(@QueryParameter("desc") String datacenterDescription,
+                                             @QueryParameter("node") String datacenterNode,
+                                             @QueryParameter("vmid") String virtualMachineId)
+            throws IOException, ServletException {
+
+        ListBoxModel m = new ListBoxModel();
+        Datacenter datacenter = getDatacenterByDescription(datacenterDescription);
+        if (datacenter != null) {
+            List<String> snapshots = datacenter.getQemuVirtualMachineSnapshots(datacenterNode,
+                    Integer.parseInt(virtualMachineId));
+            for (String snapshot : snapshots) {
+                m.add(new ListBoxModel.Option(snapshot));
+            }
+            if (!m.isEmpty()) m.get(0).selected = true;
+        }
+        return m;
     }
 }
 
