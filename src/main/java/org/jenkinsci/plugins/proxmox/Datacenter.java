@@ -9,12 +9,12 @@ import hudson.slaves.NodeProvisioner;
 import hudson.util.FormValidation;
 
 import java.io.IOException;
-import java.util.Collection;
-import java.util.Collections;
+import java.util.*;
 import java.util.logging.Logger;
 
 import javax.security.auth.login.LoginException;
 
+import net.elbandi.pve2api.data.VmQemu;
 import net.sf.json.JSONObject;
 
 import org.json.JSONException;
@@ -85,6 +85,50 @@ public class Datacenter extends Cloud {
             pve_api = new Pve2Api(hostname, username, realm, password);
         }
         return pve_api;
+    }
+
+    public List<String> getNodes() {
+        Pve2Api pve_api = proxmoxInstance();
+        try {
+            return pve_api.getNodeList();
+        } catch (JSONException e) {
+            return new ArrayList<String>(); //TODO: Properly log Proxmox exceptions
+        } catch (LoginException e) {
+            return new ArrayList<String>();
+        } catch (IOException e) {
+            return new ArrayList<String>();
+        }
+    }
+
+    public HashMap<String, Integer> getQemuVirtualMachines(String node) {
+        Pve2Api pve_api = proxmoxInstance();
+        try {
+            HashMap<String, Integer> qemuVMs = new HashMap<String, Integer>();
+            List<VmQemu> vms = pve_api.getQemuVMs(node);
+            for (VmQemu vm : vms) {
+                qemuVMs.put(vm.getName(), vm.getVmid());
+            }
+            return qemuVMs;
+        } catch (JSONException e) {
+            return new HashMap<String, Integer>(); //TODO: Properly log Proxmox exceptions
+        } catch (LoginException e) {
+            return new HashMap<String, Integer>();
+        } catch (IOException e) {
+            return new HashMap<String, Integer>();
+        }
+    }
+
+    public List<String> getQemuVirtualMachineSnapshots(String node, Integer vmid) {
+        Pve2Api pve_api = proxmoxInstance();
+        try {
+            return pve_api.getQemuVMSnapshots(node, vmid);
+        } catch (JSONException e) {
+            return new ArrayList<String>();
+        } catch (LoginException e) {
+            return new ArrayList<String>();
+        } catch (IOException e) {
+            return new ArrayList<String>();
+        }
     }
 
     @Extension

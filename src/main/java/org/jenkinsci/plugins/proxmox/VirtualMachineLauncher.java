@@ -28,18 +28,18 @@ public class VirtualMachineLauncher extends ComputerLauncher {
     private ComputerLauncher delegate;
     private String datacenterDescription;
     private String datacenterNode;
-    private String virtualMachineName;
+    private Integer virtualMachineId;
     private String snapshotName;
     private final int WAIT_TIME_MS;
 
     @DataBoundConstructor
     public VirtualMachineLauncher(ComputerLauncher delegate, String datacenterDescription, String datacenterNode,
-                                  String virtualMachineName, String snapshotName, int waitingTimeSecs) {
+                                  Integer virtualMachineId, String snapshotName, int waitingTimeSecs) {
         super();
         this.delegate = delegate;
         this.datacenterDescription = datacenterDescription;
         this.datacenterNode = datacenterNode;
-        this.virtualMachineName = virtualMachineName;
+        this.virtualMachineId = virtualMachineId;
         this.snapshotName = snapshotName;
         this.WAIT_TIME_MS = waitingTimeSecs*1000;
     }
@@ -48,12 +48,8 @@ public class VirtualMachineLauncher extends ComputerLauncher {
         return delegate;
     }
 
-    public String getVirtualMachineName() {
-        return virtualMachineName;
-    }
-
     public Datacenter findDatacenterInstance() throws RuntimeException {
-        if (datacenterDescription != null && virtualMachineName != null) {
+        if (datacenterDescription != null && virtualMachineId != null) {
             for (Cloud cloud : Hudson.getInstance().clouds) {
                 if (cloud instanceof Datacenter
                         && ((Datacenter) cloud).getDatacenterDescription().equals(datacenterDescription)) {
@@ -78,14 +74,14 @@ public class VirtualMachineLauncher extends ComputerLauncher {
 
     @Override
     public void launch(SlaveComputer slaveComputer, TaskListener taskListener) throws IOException, InterruptedException {
-        taskListener.getLogger().println("Virtual machine \"" + virtualMachineName + "\" (slave title \"" + slaveComputer.getDisplayName() + "\") is to be started.");
+        taskListener.getLogger().println("Virtual machine \"" + virtualMachineId + "\" (slave title \"" + slaveComputer.getDisplayName() + "\") is to be started.");
 
         //TODO: Launch the `slaveComputer instance`
-        Pve2Api cluster_api = new Pve2Api("proxmox.local", "harry", "dynamo-media", "password");
 
         try {
             Datacenter datacenter = findDatacenterInstance();
-            cluster_api.rollbackQemu("proxmox", 207, "ft_test");
+            Pve2Api pve = datacenter.proxmoxInstance();
+            pve.rollbackQemu("proxmox", virtualMachineId, "ft_test");
         } catch (JSONException e) {
         } catch (LoginException e) {
         }
@@ -99,7 +95,7 @@ public class VirtualMachineLauncher extends ComputerLauncher {
 
     @Override
     public synchronized void afterDisconnect(SlaveComputer slaveComputer, TaskListener taskListener) {
-        taskListener.getLogger().println("Virtual machine \"" + virtualMachineName + "\" (slave \"" + slaveComputer.getDisplayName() + "\") is to be shut down.");
+        taskListener.getLogger().println("Virtual machine \"" + virtualMachineId + "\" (slave \"" + slaveComputer.getDisplayName() + "\") is to be shut down.");
         delegate.afterDisconnect(slaveComputer, taskListener);
     }
 
