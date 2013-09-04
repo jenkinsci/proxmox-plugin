@@ -6,13 +6,12 @@
         <version>1.509.2</version><!-- which version of Jenkins is this plugin built against? -->
     </parent>
 
-    <groupId>org.jenkins-ci.plugins</groupId>
     <artifactId>proxmox</artifactId>
     <version>0.1-SNAPSHOT</version>
     <packaging>hpi</packaging>
     <name>Jenkins Proxmox plugin</name>
     <description>This plugin allows Jenkins to use Proxmox virtual machines as slaves.</description>
-    <url>http://www.github.com/justnom/</url>
+    <url>http://github.com/justnom</url>
 
     <organization>
         <name>Dynamo-Media</name>
@@ -22,7 +21,7 @@
         <developer>
             <id>justnom</id>
             <name>Harry Macey</name>
-            <email>hmacey@realvision.us</email>
+            <email>harry.macey@gmail.com</email>
         </developer>
     </developers>
 

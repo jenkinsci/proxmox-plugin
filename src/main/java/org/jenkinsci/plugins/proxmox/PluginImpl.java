@@ -25,9 +25,6 @@ public class PluginImpl extends Plugin {
         LOGGER.log(Level.FINE, "Starting proxmox plugin");
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public void stop() throws Exception {
         LOGGER.log(Level.FINE, "Stopping proxmox plugin.");
@@ -39,14 +36,11 @@ public class PluginImpl extends Plugin {
             int v = Integer.parseInt(secsValue);
             if (v < 0) {
                 return FormValidation.error("Negative value..");
-            } else if (v == 0) {
-                return FormValidation.warning("You declared this virtual machine to be ready right away. " +
-                        "It probably needs a couple of seconds before it is ready to process jobs!");
             } else {
                 return FormValidation.ok();
             }
         } catch (NumberFormatException e) {
-            return FormValidation.error("Not a number..");
+            return FormValidation.error("Not an integer");
         }
     }
 
