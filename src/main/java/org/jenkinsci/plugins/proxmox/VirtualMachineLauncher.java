@@ -9,6 +9,7 @@ import hudson.slaves.JNLPLauncher;
 import hudson.slaves.SlaveComputer;
 
 import java.io.IOException;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -74,34 +75,52 @@ public class VirtualMachineLauncher extends ComputerLauncher {
 
     @Override
     public void launch(SlaveComputer slaveComputer, TaskListener taskListener) throws IOException, InterruptedException {
-        taskListener.getLogger().println("Virtual machine \"" + virtualMachineId + "\" (slave title \"" + slaveComputer.getDisplayName() + "\") is to be started.");
-
-        //TODO: Launch the `slaveComputer instance`
+        taskListener.getLogger().println("Virtual machine \"" + virtualMachineId
+                + "\" (slave title \"" + slaveComputer.getDisplayName() + "\") is starting...");
 
         try {
             Datacenter datacenter = findDatacenterInstance();
             Pve2Api pve = datacenter.proxmoxInstance();
-            pve.rollbackQemu("proxmox", virtualMachineId, "ft_test");
+            //TODO: Check the status of this task
+            pve.rollbackQemu(datacenterNode, virtualMachineId, snapshotName);
         } catch (JSONException e) {
+            LOGGER.log(Level.SEVERE, "Parsing JSON: " + e.getMessage());
         } catch (LoginException e) {
+            LOGGER.log(Level.WARNING, "Login failed: " + e.getMessage());
         }
 
-        //TODO: Ignore the wait period for a JNLP agent as it connects back to the Jenkins instance.
+        //Ignore the wait period for a JNLP agent as it connects back to the Jenkins instance.
+        if (!(delegate instanceof JNLPLauncher)) {
+            Thread.sleep(WAIT_TIME_MS);
+        }
 
-        //Test code below
-        Thread.sleep(10000);
         delegate.launch(slaveComputer, taskListener);
     }
 
     @Override
     public synchronized void afterDisconnect(SlaveComputer slaveComputer, TaskListener taskListener) {
-        taskListener.getLogger().println("Virtual machine \"" + virtualMachineId + "\" (slave \"" + slaveComputer.getDisplayName() + "\") is to be shut down.");
         delegate.afterDisconnect(slaveComputer, taskListener);
     }
 
     @Override
     public void beforeDisconnect(SlaveComputer slaveComputer, TaskListener taskListener) {
-        //TODO: Shutdown (or stop) the virtual machine.
+        taskListener.getLogger().println("Virtual machine \"" + virtualMachineId
+                + "\" (slave \"" + slaveComputer.getDisplayName() + "\") is being stopped.");
+
+        //Stop the virtual machine
+        try {
+            Datacenter datacenter = findDatacenterInstance();
+            Pve2Api pve = datacenter.proxmoxInstance();
+            //TODO: Check the status of this task
+            pve.stopQemu(datacenterNode, virtualMachineId);
+        } catch (IOException e) {
+            LOGGER.log(Level.SEVERE, "Exception: " + e.getMessage());
+        } catch (JSONException e) {
+            LOGGER.log(Level.SEVERE, "Parsing JSON: " + e.getMessage());
+        } catch (LoginException e) {
+            LOGGER.log(Level.WARNING, "Login failed: " + e.getMessage());
+        }
+
         delegate.beforeDisconnect(slaveComputer, taskListener);
     }
 

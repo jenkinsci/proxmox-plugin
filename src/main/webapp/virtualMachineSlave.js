@@ -1,3 +1,15 @@
+/**
+ * Handles dynamic loading of the list boxes in a dependant chain.
+ *
+ * This is placed on a list box's `onchange` event. When called it
+ * updates the list box (by name attribute) given by the `nextName`
+ * argument. As the `updateListBox` function does not trigger an `onChange`
+ * event in the element being updated this is called manually via the
+ * `onSuccess` callback.
+ *
+ * @param {String} nextName Name attribute of the next list box in the chain.
+ * @param params Array of GET parameters for the list box populate function.
+ */
 function onChangeListBox(nextName, params) {
     //Build the url
     var url = rootURL + '/plugin/proxmox/' + nextName + 'Values';
@@ -19,7 +31,8 @@ function onChangeListBox(nextName, params) {
         url += queryName + '=' + encode(queryValue);
         if (i != params.length-1) url += '&';
     }
-    //Update the listbox `nextName`
+    //Update the listbox `nextName` - this function is defined by Jenkins in
+    //the `select.js` file.
     updateListBox(document.getElementsByName(nextName)[0], url,
         {'onSuccess': function() {
                 //On success call the next list box's `onChange` event
