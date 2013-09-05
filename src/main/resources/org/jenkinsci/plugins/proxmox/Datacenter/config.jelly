@@ -1,0 +1,21 @@
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+
+    <f:entry title="${%Hostname}" field="hostname" help="/plugin/proxmox/help-datacenter-hostname.html">
+        <f:textbox />
+    </f:entry>
+
+    <f:entry title="${%Username}" field="username" help="/plugin/proxmox/help-datacenter-username.html">
+        <f:textbox />
+    </f:entry>
+
+    <f:entry title="${%Realm}" field="realm" help="/plugin/proxmox/help-datacenter-realm.html">
+        <f:textbox default="pve" />
+    </f:entry>
+
+    <f:entry title="${%Password}" field="password" help="/plugin/proxmox/help-datacenter-password.html">
+        <f:password />
+    </f:entry>
+
+    <f:validateButton title="${%Test Connection}" progress="${%Testing...}" method="testConnection" with="hostname,username,realm,password"/>
+
+</j:jelly>
