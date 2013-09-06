@@ -26,9 +26,9 @@
     </developers>
 
     <scm>
-        <connection>scm:git:ssh://github.com/jenkinsci/jenkins-proxmox-plugin.git</connection>
-        <developerConnection>scm:git:ssh://git@github.com/jenkinsci/jenkins-proxmox-plugin.git</developerConnection>
-        <url>https://github.com/jenkinsci/jenkins-proxmox-plugin</url>
+        <connection>scm:git:ssh://github.com/jenkinsci/proxmox-plugin.git</connection>
+        <developerConnection>scm:git:ssh://git@github.com/jenkinsci/proxmox-plugin.git</developerConnection>
+        <url>https://github.com/jenkinsci/proxmox-plugin</url>
     </scm>
 
     <!-- get every artifact through repo.jenkins-ci.org, which proxies all the artifacts that we need -->
