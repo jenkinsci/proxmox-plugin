@@ -11,7 +11,7 @@
     <packaging>hpi</packaging>
     <name>Jenkins Proxmox plugin</name>
     <description>This plugin allows Jenkins to use Proxmox virtual machines as slaves.</description>
-    <url>http://github.com/justnom</url>
+    <url>http://wiki.jenkins-ci.org/display/JENKINS/Proxmox+Plugin</url>
 
     <organization>
         <name>Dynamo-Media</name>
@@ -25,7 +25,13 @@
         </developer>
     </developers>
 
-  <!-- get every artifact through repo.jenkins-ci.org, which proxies all the artifacts that we need -->
+    <scm>
+        <connection>scm:git:ssh://github.com/jenkinsci/proxmox-plugin.git</connection>
+        <developerConnection>scm:git:ssh://git@github.com/jenkinsci/proxmox-plugin.git</developerConnection>
+        <url>https://github.com/jenkinsci/proxmox-plugin</url>
+    </scm>
+
+    <!-- get every artifact through repo.jenkins-ci.org, which proxies all the artifacts that we need -->
     <repositories>
         <repository>
             <id>repo.jenkins-ci.org</id>
