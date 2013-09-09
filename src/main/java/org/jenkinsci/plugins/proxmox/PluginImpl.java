@@ -79,7 +79,7 @@ public class PluginImpl extends Plugin {
         ListBoxModel m = new ListBoxModel();
         Datacenter datacenter = getDatacenterByDescription(datacenterDescription);
         if (datacenter != null) {
-            Map<String, Integer> names = datacenter.getQemuVirtualMachines(datacenterNode);
+            Map<String, Integer> names = datacenter.getQemuMachines(datacenterNode);
             for (Map.Entry<String, Integer> entry : names.entrySet()) {
                 m.add(new ListBoxModel.Option(entry.getKey(), entry.getValue().toString()));
             }
@@ -96,7 +96,7 @@ public class PluginImpl extends Plugin {
         ListBoxModel m = new ListBoxModel();
         Datacenter datacenter = getDatacenterByDescription(datacenterDescription);
         if (datacenter != null) {
-            List<String> snapshots = datacenter.getQemuVirtualMachineSnapshots(datacenterNode,
+            List<String> snapshots = datacenter.getQemuMachineSnapshots(datacenterNode,
                     Integer.parseInt(virtualMachineId));
             for (String snapshot : snapshots) {
                 m.add(new ListBoxModel.Option(snapshot));

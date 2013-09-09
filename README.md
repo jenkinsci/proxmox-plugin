@@ -1,14 +1,9 @@
-# jenkins-proxmox-plugin
+# Jenkins Proxmox Plugin
 
 ## Description
 Use Proxmox virtual machines as slaves in Jenkins.
 
-## Requirements
-**pve2-api-java**
-
-Clone ``https://github.com/justnom/pve2-api-java`` and install ``mvn source:jar install``.
-
-## Installing
+## Manually Installing
  1. Clone this repo. 
  2. Run ``mvn clean package``. 
  3. Go to Jenkins in a web browser. 

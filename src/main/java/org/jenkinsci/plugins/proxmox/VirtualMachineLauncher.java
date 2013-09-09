@@ -12,11 +12,9 @@ import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.jenkinsci.plugins.proxmox.pve2api.Connector;
 import org.kohsuke.stapler.DataBoundConstructor;
-
-import net.elbandi.pve2api.Pve2Api;
-
-import org.json.JSONException;
+import us.monoid.json.JSONException;
 
 import javax.security.auth.login.LoginException;
 
@@ -80,9 +78,9 @@ public class VirtualMachineLauncher extends ComputerLauncher {
 
         try {
             Datacenter datacenter = findDatacenterInstance();
-            Pve2Api pve = datacenter.proxmoxInstance();
+            Connector pve = datacenter.proxmoxInstance();
             //TODO: Check the status of this task
-            pve.rollbackQemu(datacenterNode, virtualMachineId, snapshotName);
+            pve.rollbackQemuMachineSnapshot(datacenterNode, virtualMachineId, snapshotName);
         } catch (JSONException e) {
             LOGGER.log(Level.SEVERE, "Parsing JSON: " + e.getMessage());
         } catch (LoginException e) {
@@ -110,9 +108,9 @@ public class VirtualMachineLauncher extends ComputerLauncher {
         //Stop the virtual machine
         try {
             Datacenter datacenter = findDatacenterInstance();
-            Pve2Api pve = datacenter.proxmoxInstance();
+            Connector pve = datacenter.proxmoxInstance();
             //TODO: Check the status of this task
-            pve.stopQemu(datacenterNode, virtualMachineId);
+            pve.stopQemuMachine(datacenterNode, virtualMachineId);
         } catch (IOException e) {
             LOGGER.log(Level.SEVERE, "Exception: " + e.getMessage());
         } catch (JSONException e) {

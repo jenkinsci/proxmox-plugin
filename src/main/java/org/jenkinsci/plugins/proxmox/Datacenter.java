@@ -14,15 +14,15 @@ import java.util.logging.Logger;
 
 import javax.security.auth.login.LoginException;
 
-import net.elbandi.pve2api.data.VmQemu;
 import net.sf.json.JSONObject;
 
-import org.json.JSONException;
+import us.monoid.json.JSONException;
+
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 
-import net.elbandi.pve2api.Pve2Api;
+import org.jenkinsci.plugins.proxmox.pve2api.Connector;
 
 /**
  * Represents a Proxmox datacenter.
@@ -35,7 +35,7 @@ public class Datacenter extends Cloud {
     private final String username;
     private final String realm;
     private final String password; //TODO: Use `Secret` to store the password.
-    private transient Pve2Api pve_api;
+    private transient Connector pveConnector;
 
     @DataBoundConstructor
     public Datacenter(String hostname, String username, String realm, String password) {
@@ -44,7 +44,7 @@ public class Datacenter extends Cloud {
         this.username = username;
         this.realm = realm;
         this.password = password;
-        this.pve_api = null;
+        this.pveConnector = null;
     }
 
     public Collection<NodeProvisioner.PlannedNode> provision(Label label, int excessWorkload) {
@@ -80,17 +80,17 @@ public class Datacenter extends Cloud {
         return (DescriptorImpl) super.getDescriptor();
     }
 
-    public Pve2Api proxmoxInstance() {
-        if (pve_api == null) {
-            pve_api = new Pve2Api(hostname, username, realm, password);
+    public Connector proxmoxInstance() {
+        if (pveConnector == null) {
+            pveConnector = new Connector(hostname, username, realm, password);
         }
-        return pve_api;
+        return pveConnector;
     }
 
     public List<String> getNodes() {
-        Pve2Api pve_api = proxmoxInstance();
+        Connector pveConnector = proxmoxInstance();
         try {
-            return pve_api.getNodeList();
+            return pveConnector.getNodes();
         } catch (JSONException e) {
             return new ArrayList<String>(); //TODO: Properly log Proxmox exceptions
         } catch (LoginException e) {
@@ -100,17 +100,12 @@ public class Datacenter extends Cloud {
         }
     }
 
-    public HashMap<String, Integer> getQemuVirtualMachines(String node) {
-        Pve2Api pve_api = proxmoxInstance();
+    public HashMap<String, Integer> getQemuMachines(String node) {
+        Connector pveConnector = proxmoxInstance();
         try {
-            HashMap<String, Integer> qemuVMs = new HashMap<String, Integer>();
-            List<VmQemu> vms = pve_api.getQemuVMs(node);
-            for (VmQemu vm : vms) {
-                qemuVMs.put(vm.getName(), vm.getVmid());
-            }
-            return qemuVMs;
+            return pveConnector.getQemuMachines(node);
         } catch (JSONException e) {
-            return new HashMap<String, Integer>(); //TODO: Properly log Proxmox exceptions
+            return new HashMap<String, Integer>();
         } catch (LoginException e) {
             return new HashMap<String, Integer>();
         } catch (IOException e) {
@@ -118,10 +113,10 @@ public class Datacenter extends Cloud {
         }
     }
 
-    public List<String> getQemuVirtualMachineSnapshots(String node, Integer vmid) {
-        Pve2Api pve_api = proxmoxInstance();
+    public List<String> getQemuMachineSnapshots(String node, Integer vmid) {
+        Connector pveConnector = proxmoxInstance();
         try {
-            return pve_api.getQemuVMSnapshots(node, vmid);
+            return pveConnector.getQemuMachineSnapshots(node, vmid);
         } catch (JSONException e) {
             return new ArrayList<String>();
         } catch (LoginException e) {
@@ -195,12 +190,10 @@ public class Datacenter extends Cloud {
                     return fieldNotSpecifiedError("Password");
                 }
 
-                Pve2Api pve_api = new Pve2Api(hostname, username, realm, password);
-                pve_api.login();
+                Connector pveConnector = new Connector(hostname, username, realm, password);
+                pveConnector.login();
                 return FormValidation.ok("Login successful");
 
-            } catch(JSONException e) {
-                return FormValidation.error("Could not read server JSON response: " + e.getMessage());
             } catch (LoginException e) {
                 return FormValidation.error("Invalid login credentials");
             } catch (IOException e) {
