@@ -74,17 +74,18 @@ public class VirtualMachineLauncher extends ComputerLauncher {
     @Override
     public void launch(SlaveComputer slaveComputer, TaskListener taskListener) throws IOException, InterruptedException {
         taskListener.getLogger().println("Virtual machine \"" + virtualMachineId
-                + "\" (slave title \"" + slaveComputer.getDisplayName() + "\") is starting...");
+                + "\" (Name \"" + slaveComputer.getDisplayName() + "\") is starting...");
 
         try {
             Datacenter datacenter = findDatacenterInstance();
             Connector pve = datacenter.proxmoxInstance();
             //TODO: Check the status of this task
-            pve.rollbackQemuMachineSnapshot(datacenterNode, virtualMachineId, snapshotName);
+            String taskResult = pve.rollbackQemuMachineSnapshot(datacenterNode, virtualMachineId, snapshotName);
+            taskListener.getLogger().println("Proxmox returned: " + taskResult);
         } catch (JSONException e) {
-            LOGGER.log(Level.SEVERE, "Parsing JSON: " + e.getMessage());
+            taskListener.getLogger().println("ERROR: Parsing JSON: " + e.getMessage());
         } catch (LoginException e) {
-            LOGGER.log(Level.WARNING, "Login failed: " + e.getMessage());
+            taskListener.getLogger().println("ERROR: Login failed: " + e.getMessage());
         }
 
         //Ignore the wait period for a JNLP agent as it connects back to the Jenkins instance.
