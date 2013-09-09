@@ -121,7 +121,7 @@ public class VirtualMachineSlave extends Slave {
         public HashMap<String, Integer> getQemuVirtualMachines(String datacenterDescription, String datacenterNode) {
             Datacenter datacenter = getDatacenterByDescription(datacenterDescription);
             if (datacenter != null) {
-                return datacenter.getQemuVirtualMachines(datacenterNode);
+                return datacenter.getQemuMachines(datacenterNode);
             }
             return new HashMap<String, Integer>();
         }
@@ -130,7 +130,7 @@ public class VirtualMachineSlave extends Slave {
                                                  Integer virtualMachineId) {
             Datacenter datacenter = getDatacenterByDescription(datacenterDescription);
             if (datacenter != null) {
-                return datacenter.getQemuVirtualMachineSnapshots(datacenterNode, virtualMachineId);
+                return datacenter.getQemuMachineSnapshots(datacenterNode, virtualMachineId);
             }
             return new ArrayList<String>();
         }
