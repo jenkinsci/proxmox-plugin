@@ -16,6 +16,13 @@
         <f:password />
     </f:entry>
 
-    <f:validateButton title="${%Test Connection}" progress="${%Testing...}" method="testConnection" with="hostname,username,realm,password"/>
+    <f:advanced>
+        <f:entry title="${%Ignore SSL certificates}" field="ignoreSSL">
+            <f:checkbox default="false" />
+        </f:entry>
+    </f:advanced>
+
+    <f:validateButton title="${%Test Connection}" progress="${%Testing...}" method="testConnection"
+                      with="hostname,username,realm,password,ignoreSSL"/>
 
 </j:jelly>

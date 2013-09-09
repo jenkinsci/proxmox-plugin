@@ -12,11 +12,9 @@ import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.jenkinsci.plugins.proxmox.pve2api.Connector;
 import org.kohsuke.stapler.DataBoundConstructor;
-
-import net.elbandi.pve2api.Pve2Api;
-
-import org.json.JSONException;
+import us.monoid.json.JSONException;
 
 import javax.security.auth.login.LoginException;
 
@@ -76,17 +74,18 @@ public class VirtualMachineLauncher extends ComputerLauncher {
     @Override
     public void launch(SlaveComputer slaveComputer, TaskListener taskListener) throws IOException, InterruptedException {
         taskListener.getLogger().println("Virtual machine \"" + virtualMachineId
-                + "\" (slave title \"" + slaveComputer.getDisplayName() + "\") is starting...");
+                + "\" (Name \"" + slaveComputer.getDisplayName() + "\") is starting...");
 
         try {
             Datacenter datacenter = findDatacenterInstance();
-            Pve2Api pve = datacenter.proxmoxInstance();
+            Connector pve = datacenter.proxmoxInstance();
             //TODO: Check the status of this task
-            pve.rollbackQemu(datacenterNode, virtualMachineId, snapshotName);
+            String taskResult = pve.rollbackQemuMachineSnapshot(datacenterNode, virtualMachineId, snapshotName);
+            taskListener.getLogger().println("Proxmox returned: " + taskResult);
         } catch (JSONException e) {
-            LOGGER.log(Level.SEVERE, "Parsing JSON: " + e.getMessage());
+            taskListener.getLogger().println("ERROR: Parsing JSON: " + e.getMessage());
         } catch (LoginException e) {
-            LOGGER.log(Level.WARNING, "Login failed: " + e.getMessage());
+            taskListener.getLogger().println("ERROR: Login failed: " + e.getMessage());
         }
 
         //Ignore the wait period for a JNLP agent as it connects back to the Jenkins instance.
@@ -110,9 +109,9 @@ public class VirtualMachineLauncher extends ComputerLauncher {
         //Stop the virtual machine
         try {
             Datacenter datacenter = findDatacenterInstance();
-            Pve2Api pve = datacenter.proxmoxInstance();
+            Connector pve = datacenter.proxmoxInstance();
             //TODO: Check the status of this task
-            pve.stopQemu(datacenterNode, virtualMachineId);
+            pve.stopQemuMachine(datacenterNode, virtualMachineId);
         } catch (IOException e) {
             LOGGER.log(Level.SEVERE, "Exception: " + e.getMessage());
         } catch (JSONException e) {
