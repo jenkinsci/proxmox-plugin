@@ -37,6 +37,9 @@
         </select>
     </f:entry>
 
+    <f:validateButton title="${%Test Rollback}" progress="${%Testing...}" method="testRollback"
+                      with="datacenterDescription,datacenterNode,virtualMachineId,snapshotName"/>
+
     <f:entry title="${%Description}" help="/help/system-config/master-slave/description.html">
         <f:textbox field="nodeDescription"/>
     </f:entry>

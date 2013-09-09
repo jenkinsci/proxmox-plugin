@@ -35,15 +35,17 @@ public class Datacenter extends Cloud {
     private final String username;
     private final String realm;
     private final String password; //TODO: Use `Secret` to store the password.
+    private final Boolean ignoreSSL;
     private transient Connector pveConnector;
 
     @DataBoundConstructor
-    public Datacenter(String hostname, String username, String realm, String password) {
+    public Datacenter(String hostname, String username, String realm, String password, Boolean ignoreSSL) {
         super("Datacenter(proxmox)");
         this.hostname = hostname;
         this.username = username;
         this.realm = realm;
         this.password = password;
+        this.ignoreSSL = ignoreSSL;
         this.pveConnector = null;
     }
 
@@ -71,6 +73,10 @@ public class Datacenter extends Cloud {
         return password;
     }
 
+    public Boolean getIgnoreSSL() {
+        return ignoreSSL;
+    }
+
     public String getDatacenterDescription() {
         return username + "@" + realm + " - " + hostname;
     }
@@ -82,7 +88,7 @@ public class Datacenter extends Cloud {
 
     public Connector proxmoxInstance() {
         if (pveConnector == null) {
-            pveConnector = new Connector(hostname, username, realm, password);
+            pveConnector = new Connector(hostname, username, realm, password, ignoreSSL);
         }
         return pveConnector;
     }
@@ -133,6 +139,7 @@ public class Datacenter extends Cloud {
         private String username;
         private String realm;
         private String password;
+        private Boolean ignoreSSL;
 
         public String getDisplayName() {
             return "Proxmox Datacenter";
@@ -144,6 +151,7 @@ public class Datacenter extends Cloud {
             username = o.getString("username");
             realm = o.getString("realm");
             password = o.getString("password");
+            ignoreSSL = o.getBoolean("ignoreSSL");
             save();
             return super.configure(req, o);
         }
@@ -175,7 +183,7 @@ public class Datacenter extends Cloud {
 
         public FormValidation doTestConnection (
                 @QueryParameter String hostname, @QueryParameter String username, @QueryParameter String realm,
-                @QueryParameter String password) {
+                @QueryParameter String password, @QueryParameter Boolean ignoreSSL) {
             try {
                 if (hostname.isEmpty()) {
                     return fieldNotSpecifiedError("Hostname");
@@ -190,7 +198,7 @@ public class Datacenter extends Cloud {
                     return fieldNotSpecifiedError("Password");
                 }
 
-                Connector pveConnector = new Connector(hostname, username, realm, password);
+                Connector pveConnector = new Connector(hostname, username, realm, password, ignoreSSL);
                 pveConnector.login();
                 return FormValidation.ok("Login successful");
 

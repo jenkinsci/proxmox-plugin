@@ -9,6 +9,7 @@ import hudson.slaves.Cloud;
 import hudson.slaves.NodeProperty;
 import hudson.slaves.ComputerLauncher;
 import hudson.slaves.RetentionStrategy;
+import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 
 import java.io.IOException;
@@ -16,7 +17,12 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import org.jenkinsci.plugins.proxmox.pve2api.Connector;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.QueryParameter;
+import us.monoid.json.JSONException;
+
+import javax.security.auth.login.LoginException;
 
 public class VirtualMachineSlave extends Slave {
 
@@ -151,6 +157,25 @@ public class VirtualMachineSlave extends Slave {
             return snapshotName;
         }
 
+        public FormValidation doTestRollback (
+                @QueryParameter String datacenterDescription, @QueryParameter String datacenterNode,
+                @QueryParameter Integer virtualMachineId, @QueryParameter String snapshotName) {
+            Datacenter datacenter = getDatacenterByDescription(datacenterDescription);
+            if (datacenter == null)
+                return FormValidation.error("Datacenter not found!");
+            Connector pveApi = datacenter.proxmoxInstance();
+            try {
+                String taskStatus = pveApi.rollbackQemuMachineSnapshot(datacenterNode, virtualMachineId, snapshotName);
+                return FormValidation.ok("Returned: " + taskStatus);
+            } catch (IOException e) {
+                return FormValidation.error("IO: " + e.getMessage());
+            } catch (LoginException e) {
+                return FormValidation.error("Login Failed: " + e.getMessage());
+            } catch (JSONException e) {
+                return FormValidation.error("JSON: " + e.getMessage());
+            }
+        }
+
         private Datacenter getDatacenterByDescription (String datacenterDescription) {
             if (datacenterDescription != null && !datacenterDescription.equals("")) {
                 for (Cloud cloud : Hudson.getInstance().clouds) {
@@ -161,5 +186,6 @@ public class VirtualMachineSlave extends Slave {
             }
             return null;
         }
+
     }
 }

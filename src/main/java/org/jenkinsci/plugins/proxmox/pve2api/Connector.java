@@ -1,6 +1,9 @@
 package org.jenkinsci.plugins.proxmox.pve2api;
 
 import java.io.IOException;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -13,6 +16,7 @@ import us.monoid.web.JSONResource;
 import us.monoid.web.Resty;
 import static us.monoid.web.Resty.*;
 
+import javax.net.ssl.*;
 import javax.security.auth.login.LoginException;
 
 public class Connector {
@@ -21,19 +25,70 @@ public class Connector {
     protected String username;
     protected String realm;
     protected String password;
+    protected Boolean ignoreSSL;
     protected String baseURL;
 
     private String authTicket;
     private Date authTicketIssuedTimestamp;
     private String csrfPreventionToken;
 
+    private static SSLSocketFactory cachedSSLSocketFactory = null;
+    private static HostnameVerifier cachedHostnameVerifier = null;
+
+    private static void ignoreAllCerts() {
+        if (cachedSSLSocketFactory == null)
+            cachedSSLSocketFactory = HttpsURLConnection.getDefaultSSLSocketFactory();
+        if (cachedHostnameVerifier == null)
+            cachedHostnameVerifier  = HttpsURLConnection.getDefaultHostnameVerifier();
+
+        TrustManager trm = new X509TrustManager() {
+            public void checkClientTrusted(X509Certificate[] certs, String authType) {}
+            public void checkServerTrusted(X509Certificate[] certs, String authType) {}
+            public X509Certificate[] getAcceptedIssuers() {	return null; }
+        };
+
+        HostnameVerifier hnv = new HostnameVerifier() {
+            public boolean verify(String s, SSLSession sslSession) {
+                return true;
+            }
+        };
+
+        SSLContext sc;
+        try {
+            sc = SSLContext.getInstance("SSL");
+            sc.init(null, new TrustManager[] { trm }, null);
+            HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
+            HttpsURLConnection.setDefaultHostnameVerifier(hnv);
+        } catch (KeyManagementException e) {
+            e.printStackTrace();
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void resetCachedSSLHelperObjects() {
+        if (cachedSSLSocketFactory != null)
+            HttpsURLConnection.setDefaultSSLSocketFactory(cachedSSLSocketFactory);
+        if (cachedHostnameVerifier != null)
+            HttpsURLConnection.setDefaultHostnameVerifier(cachedHostnameVerifier);
+    }
+
     public Connector(String hostname, String username, String realm, String password) {
+        this(hostname, username, realm, password, false);
+    }
+
+    public Connector(String hostname, String username, String realm, String password, Boolean ignoreSSL) {
         //TODO: Split the hostname to check for a port.
         this.hostname = hostname;
         this.port = 8006;
         this.username = username;
         this.realm = realm;
         this.password = password;
+        this.ignoreSSL = ignoreSSL;
+        if (ignoreSSL)
+            ignoreAllCerts();
+        else
+            resetCachedSSLHelperObjects();
         this.authTicketIssuedTimestamp = null;
         this.baseURL = "https://" + hostname + ":" + port.toString() + "/api2/json/";
     }
@@ -104,14 +159,14 @@ public class Connector {
             throws IOException, LoginException, JSONException {
         Resty r = authedClient();
         String resource = "nodes/" + node + "/qemu/" + vmid.toString() + "/snapshot/" + snapshotName + "/rollback";
-        JSONResource response = r.json(resource, form(""));
+        JSONResource response = r.json(baseURL + resource, form(""));
         return response.toObject().getString("data");
     }
 
     public String stopQemuMachine(String node, Integer vmid) throws IOException, LoginException, JSONException {
         Resty r = authedClient();
         String resource = "nodes/" + node + "/qemu/" + vmid.toString() + "/status/stop";
-        JSONResource response = r.json(resource, form(""));
+        JSONResource response = r.json(baseURL + resource, form(""));
         return response.toObject().getString("data");
     }
 
