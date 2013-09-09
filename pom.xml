@@ -7,7 +7,7 @@
     </parent>
 
     <artifactId>proxmox</artifactId>
-    <version>0.2</version>
+    <version>0.3-SNAPSHOT</version>
     <packaging>hpi</packaging>
     <name>Jenkins Proxmox plugin</name>
     <description>This plugin allows Jenkins to use Proxmox virtual machines as slaves.</description>
