@@ -15,6 +15,7 @@ import java.util.logging.Logger;
 import org.jenkinsci.plugins.proxmox.pve2api.Connector;
 import org.kohsuke.stapler.DataBoundConstructor;
 import us.monoid.json.JSONException;
+import us.monoid.json.JSONObject;
 
 import javax.security.auth.login.LoginException;
 
@@ -29,17 +30,19 @@ public class VirtualMachineLauncher extends ComputerLauncher {
     private String datacenterNode;
     private Integer virtualMachineId;
     private String snapshotName;
+    private Boolean startVM;
     private final int WAIT_TIME_MS;
 
     @DataBoundConstructor
     public VirtualMachineLauncher(ComputerLauncher delegate, String datacenterDescription, String datacenterNode,
-                                  Integer virtualMachineId, String snapshotName, int waitingTimeSecs) {
+                                  Integer virtualMachineId, String snapshotName, Boolean startVM, int waitingTimeSecs) {
         super();
         this.delegate = delegate;
         this.datacenterDescription = datacenterDescription;
         this.datacenterNode = datacenterNode;
         this.virtualMachineId = virtualMachineId;
         this.snapshotName = snapshotName;
+        this.startVM = startVM;
         this.WAIT_TIME_MS = waitingTimeSecs*1000;
     }
 
@@ -74,14 +77,27 @@ public class VirtualMachineLauncher extends ComputerLauncher {
     @Override
     public void launch(SlaveComputer slaveComputer, TaskListener taskListener) throws IOException, InterruptedException {
         taskListener.getLogger().println("Virtual machine \"" + virtualMachineId
-                + "\" (Name \"" + slaveComputer.getDisplayName() + "\") is starting...");
+                + "\" (Name \"" + slaveComputer.getDisplayName() + "\") is being reverted...");
 
         try {
             Datacenter datacenter = findDatacenterInstance();
             Connector pve = datacenter.proxmoxInstance();
-            //TODO: Check the status of this task
-            String taskResult = pve.rollbackQemuMachineSnapshot(datacenterNode, virtualMachineId, snapshotName);
-            taskListener.getLogger().println("Proxmox returned: " + taskResult);
+
+            //TODO: Check the status of this task (pass/fail) not just that its finished
+            String taskId = pve.rollbackQemuMachineSnapshot(datacenterNode, virtualMachineId, snapshotName);
+            taskListener.getLogger().println("Proxmox returned: " + taskId);
+
+            //Wait for the task to finish
+            JSONObject taskStatus = pve.waitForTaskToFinish(datacenterNode, taskId);
+            taskListener.getLogger().println("Task finished! Status object: " + taskStatus.toString());
+
+            if (startVM) {
+                taskListener.getLogger().println("Starting virtual machine...");
+                taskId = pve.startQemuMachine(datacenterNode, virtualMachineId);
+                taskStatus = pve.waitForTaskToFinish(datacenterNode, taskId);
+                taskListener.getLogger().println("Task finished! Status object: " + taskStatus.toString());
+            }
+
         } catch (IOException e) {
             taskListener.getLogger().println("ERROR: IOException: " + e.getMessage());
         } catch (JSONException e) {
