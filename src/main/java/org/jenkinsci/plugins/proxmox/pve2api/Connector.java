@@ -107,8 +107,9 @@ public class Connector {
     }
 
     public void checkIfAuthTicketIsValid() throws IOException, LoginException {
+        //Authentication ticket has a lifetime of 2 hours, so login again when it expires
         if (authTicketIssuedTimestamp == null
-                || authTicketIssuedTimestamp.getTime() >= (new Date().getTime() - 3600)) {
+                || authTicketIssuedTimestamp.getTime() >= (new Date().getTime() - (120 * 60 * 1000))) {
             login();
         }
     }
