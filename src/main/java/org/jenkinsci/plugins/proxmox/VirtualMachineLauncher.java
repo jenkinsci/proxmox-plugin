@@ -82,6 +82,8 @@ public class VirtualMachineLauncher extends ComputerLauncher {
             //TODO: Check the status of this task
             String taskResult = pve.rollbackQemuMachineSnapshot(datacenterNode, virtualMachineId, snapshotName);
             taskListener.getLogger().println("Proxmox returned: " + taskResult);
+        } catch (IOException e) {
+            taskListener.getLogger().println("ERROR: IOException: " + e.getMessage());
         } catch (JSONException e) {
             taskListener.getLogger().println("ERROR: Parsing JSON: " + e.getMessage());
         } catch (LoginException e) {
