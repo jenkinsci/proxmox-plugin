@@ -96,7 +96,7 @@ public class Connector {
     public void login() throws IOException, LoginException {
         Resty r = new Resty();
         JSONResource authTickets = r.json(baseURL + "access/ticket",
-                form(data("username", username + "@" + realm), data("password", password)));
+                form("username=" + username + "@" + realm + "&password=" + password));
         try {
             authTicket = authTickets.get("data.ticket").toString();
             csrfPreventionToken = authTickets.get("data.CSRFPreventionToken").toString();
