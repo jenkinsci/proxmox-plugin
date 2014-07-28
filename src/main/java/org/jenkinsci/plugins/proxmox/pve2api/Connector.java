@@ -96,7 +96,7 @@ public class Connector {
     public void login() throws IOException, LoginException {
         Resty r = new Resty();
         JSONResource authTickets = r.json(baseURL + "access/ticket",
-                form(data("username", username + "@" + realm), data("password", password)));
+                form("username=" + username + "@" + realm + "&password=" + password));
         try {
             authTicket = authTickets.get("data.ticket").toString();
             csrfPreventionToken = authTickets.get("data.CSRFPreventionToken").toString();
@@ -109,7 +109,7 @@ public class Connector {
     public void checkIfAuthTicketIsValid() throws IOException, LoginException {
         //Authentication ticket has a lifetime of 2 hours, so login again when it expires
         if (authTicketIssuedTimestamp == null
-                || authTicketIssuedTimestamp.getTime() >= (new Date().getTime() - (120 * 60 * 1000))) {
+                || authTicketIssuedTimestamp.getTime() <= (new Date().getTime() - (120 * 60 * 1000))) {
             login();
         }
     }
@@ -133,6 +133,21 @@ public class Connector {
             res.add(nodes.getJSONObject(i).getString("node"));
         }
         return res;
+    }
+
+    public JSONObject getTaskStatus(String node, String taskId) throws IOException, LoginException, JSONException {
+        JSONResource response = getJSONResource("nodes/" + node + "/tasks/" + taskId + "/status");
+        return response.toObject().getJSONObject("data");
+    }
+
+    public JSONObject waitForTaskToFinish(String node, String taskId) throws IOException, LoginException, JSONException {
+        JSONObject lastTaskStatus = null;
+        Boolean isRunning = true;
+        while (isRunning) {
+            lastTaskStatus = getTaskStatus(node, taskId);
+            isRunning = (lastTaskStatus.getString("status").equals("running"));
+        }
+        return lastTaskStatus;
     }
 
     public HashMap<String, Integer> getQemuMachines(String node) throws IOException, LoginException, JSONException {
@@ -160,6 +175,13 @@ public class Connector {
             throws IOException, LoginException, JSONException {
         Resty r = authedClient();
         String resource = "nodes/" + node + "/qemu/" + vmid.toString() + "/snapshot/" + snapshotName + "/rollback";
+        JSONResource response = r.json(baseURL + resource, form(""));
+        return response.toObject().getString("data");
+    }
+
+    public String startQemuMachine(String node, Integer vmid) throws IOException, LoginException, JSONException {
+        Resty r = authedClient();
+        String resource = "nodes/" + node + "/qemu/" + vmid.toString() + "/status/start";
         JSONResource response = r.json(baseURL + resource, form(""));
         return response.toObject().getString("data");
     }
