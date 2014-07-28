@@ -30,6 +30,7 @@ public class VirtualMachineSlave extends Slave {
     private String datacenterNode;
     private String snapshotName;
     private Integer virtualMachineId;
+    private Boolean startVM;
     private int startupWaitingPeriodSeconds;
 
     @DataBoundConstructor
@@ -37,17 +38,18 @@ public class VirtualMachineSlave extends Slave {
                                Mode mode, String labelString, ComputerLauncher delegateLauncher,
                                RetentionStrategy retentionStrategy, List<? extends NodeProperty<?>> nodeProperties,
                                String datacenterDescription, String datacenterNode, Integer virtualMachineId,
-                               String snapshotName, int startupWaitingPeriodSeconds)
+                               String snapshotName, Boolean startVM, int startupWaitingPeriodSeconds)
             throws
             Descriptor.FormException, IOException {
         super(name, nodeDescription, remoteFS, numExecutors, mode, labelString,
                 new VirtualMachineLauncher(delegateLauncher, datacenterDescription, datacenterNode, virtualMachineId,
-                        snapshotName, startupWaitingPeriodSeconds),
+                        snapshotName, startVM, startupWaitingPeriodSeconds),
                 retentionStrategy, nodeProperties);
         this.datacenterDescription = datacenterDescription;
         this.datacenterNode = datacenterNode;
         this.virtualMachineId = virtualMachineId;
         this.snapshotName = snapshotName;
+        this.startVM = startVM;
         this.startupWaitingPeriodSeconds = startupWaitingPeriodSeconds;
     }
 
@@ -65,6 +67,10 @@ public class VirtualMachineSlave extends Slave {
 
     public String getSnapshotName() {
         return snapshotName;
+    }
+
+    public Boolean getStartVM() {
+        return startVM;
     }
 
     public int getStartupWaitingPeriodSeconds() {
@@ -89,6 +95,7 @@ public class VirtualMachineSlave extends Slave {
         private String datacenterNode;
         private Integer virtualMachineId;
         private String snapshotName;
+        private Boolean startVM;
 
         public DescriptorImpl() {
             load();
@@ -155,6 +162,10 @@ public class VirtualMachineSlave extends Slave {
 
         public String getSnapshotName() {
             return snapshotName;
+        }
+
+        public Boolean getStartVM() {
+            return startVM;
         }
 
         public FormValidation doTestRollback (
