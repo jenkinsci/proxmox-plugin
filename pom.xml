@@ -3,11 +3,11 @@
     <parent>
         <groupId>org.jenkins-ci.plugins</groupId>
         <artifactId>plugin</artifactId>
-        <version>1.509.2</version><!-- which version of Jenkins is this plugin built against? -->
+        <version>1.554.1</version><!-- which version of Jenkins is this plugin built against? -->
     </parent>
 
     <artifactId>proxmox</artifactId>
-    <version>0.2.2-SNAPSHOT</version>
+    <version>0.2.2</version>
     <packaging>hpi</packaging>
     <name>Jenkins Proxmox plugin</name>
     <description>This plugin allows Jenkins to use Proxmox virtual machines as slaves.</description>
