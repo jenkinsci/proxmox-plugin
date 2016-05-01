@@ -27,7 +27,7 @@
 
     <scm>
 	<connection>scm:git:ssh://github.com/jenkinsci/proxmox-plugin.git</connection>
-	<developerConnection>scm:git:ssh://git@github.com:jenkinsci/proxmox-plugin.git</developerConnection>
+	<developerConnection>scm:git:ssh://git@github.com/jenkinsci/proxmox-plugin.git</developerConnection>
         <url>https://github.com/jenkinsci/proxmox-plugin</url>
     </scm>
 
