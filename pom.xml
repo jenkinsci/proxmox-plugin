@@ -3,12 +3,18 @@
     <parent>
         <groupId>org.jenkins-ci.plugins</groupId>
         <artifactId>plugin</artifactId>
-        <version>1.554.1</version><!-- which version of Jenkins is this plugin built against? -->
+        <version>3.4</version>
+        <relativePath />
     </parent>
 
+	<groupId>io.jenkins.plugins</groupId>
     <artifactId>proxmox</artifactId>
-    <version>0.2.2</version>
+    <version>0.3.0</version>
     <packaging>hpi</packaging>
+	<properties>
+        <jenkins.version>2.89.4</jenkins.version>
+        <java.level>8</java.level>
+    </properties>
     <name>Jenkins Proxmox plugin</name>
     <description>This plugin allows Jenkins to use Proxmox virtual machines as slaves.</description>
     <url>http://wiki.jenkins-ci.org/display/JENKINS/Proxmox+Plugin</url>
@@ -59,12 +65,4 @@
             <scope>compile</scope>
         </dependency>
     </dependencies>
-
-    <properties>
-        <!--
-          explicitly specifying the latest version here because one we get from the parent POM
-          tends to lag behind a bit
-        -->
-        <maven-hpi-plugin.version>1.96</maven-hpi-plugin.version>
-    </properties>
 </project>
