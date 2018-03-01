@@ -1,6 +1,4 @@
-<!--
-  This view is used to render the installed plugins page.
--->
+<?jelly escape-by-default='true'?>
 <div>
   Enables proxmox machines to be used as slaves. Supports reverting from a snapshot
 </div>

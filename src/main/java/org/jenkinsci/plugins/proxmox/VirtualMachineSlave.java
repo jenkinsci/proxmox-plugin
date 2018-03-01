@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.jenkinsci.plugins.proxmox.pve2api.Connector;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -112,6 +113,7 @@ public class VirtualMachineSlave extends Slave {
 
         public ListBoxModel doFillDatacenterDescriptionItems() {
             ListBoxModel items = new ListBoxModel();
+            items.add("[Select]", "");
             for (Cloud cloud : Hudson.getInstance().clouds) {
                 if (cloud instanceof Datacenter) {
                     //TODO: Possibly add the `datacenterDescription` as the `displayName` and `value` (http://javadoc.jenkins-ci.org/hudson/util/ListBoxModel.html)
@@ -122,30 +124,42 @@ public class VirtualMachineSlave extends Slave {
             return items;
         }
 
-        //TODO: Possibly replace these with `doFillDatacenterNodeItems` function
-        public List<String> getDatacenterNodes(String datacenterDescription) {
+        public ListBoxModel doFillDatacenterNodeItems(@QueryParameter("datacenterDescription") String datacenterDescription) {
+            ListBoxModel items = new ListBoxModel();
+            items.add("[Select]", "");
             Datacenter datacenter = getDatacenterByDescription(datacenterDescription);
             if (datacenter != null) {
-                return datacenter.getNodes();
+                for (String node : datacenter.getNodes()) {
+                    items.add(node);
+                }
             }
-            return new ArrayList<String>();
+            return items;
         }
 
-        public HashMap<String, Integer> getQemuVirtualMachines(String datacenterDescription, String datacenterNode) {
+        public ListBoxModel doFillVirtualMachineIdItems(@QueryParameter("datacenterDescription") String datacenterDescription, @QueryParameter("datacenterNode") String datacenterNode) {
+            ListBoxModel items = new ListBoxModel();
+            items.add("[Select]", "");
             Datacenter datacenter = getDatacenterByDescription(datacenterDescription);
             if (datacenter != null) {
-                return datacenter.getQemuMachines(datacenterNode);
+                HashMap<String, Integer> machines = datacenter.getQemuMachines(datacenterNode);
+                for (Map.Entry me : machines.entrySet()) {
+                    items.add(me.getKey().toString(), me.getValue().toString());
+                }
             }
-            return new HashMap<String, Integer>();
+            return items;
         }
 
-        public List<String> getQemuSnapshotNames(String datacenterDescription, String datacenterNode,
-                                                 Integer virtualMachineId) {
+        public ListBoxModel doFillSnapshotNameItems(@QueryParameter("datacenterDescription") String datacenterDescription, @QueryParameter("datacenterNode") String datacenterNode,
+                                                 @QueryParameter("virtualMachineId") String virtualMachineId) {
+            ListBoxModel items = new ListBoxModel();
+            items.add("[Select]", "");
             Datacenter datacenter = getDatacenterByDescription(datacenterDescription);
-            if (datacenter != null) {
-                return datacenter.getQemuMachineSnapshots(datacenterNode, virtualMachineId);
+            if (datacenter != null && virtualMachineId != null && virtualMachineId.length() != 0) {
+                for (String snapshot : datacenter.getQemuMachineSnapshots(datacenterNode, Integer.parseInt(virtualMachineId))) {
+                    items.add(snapshot);
+                }
             }
-            return new ArrayList<String>();
+            return items;
         }
 
         public String getDatacenterDescription() {
