@@ -139,6 +139,19 @@ public class Connector {
         JSONResource response = getJSONResource("nodes/" + node + "/tasks/" + taskId + "/status");
         return response.toObject().getJSONObject("data");
     }
+    
+    public JSONObject getQemuMachineStatus(String node, Integer vmid) throws IOException, LoginException, JSONException {
+      JSONResource response = getJSONResource("nodes/" + node + "/qemu/" + vmid + "/status/current");
+      return response.toObject().getJSONObject("data");
+    }
+    
+    public Boolean isQemuMachineRunning(String node, Integer vmid) throws IOException, LoginException, JSONException {
+      JSONObject QemuMachineStatus = null;
+      Boolean isRunning = true;
+      QemuMachineStatus = getQemuMachineStatus(node, vmid);
+      isRunning = (QemuMachineStatus.getString("status").equals("running"));
+      return isRunning;
+  }
 
     public JSONObject waitForTaskToFinish(String node, String taskId) throws IOException, LoginException, JSONException {
         JSONObject lastTaskStatus = null;
@@ -192,5 +205,12 @@ public class Connector {
         JSONResource response = r.json(baseURL + resource, form(""));
         return response.toObject().getString("data");
     }
+    
+    public String shutdownQemuMachine(String node, Integer vmid) throws IOException, LoginException, JSONException {
+      Resty r = authedClient();
+      String resource = "nodes/" + node + "/qemu/" + vmid.toString() + "/status/shutdown";
+      JSONResource response = r.json(baseURL + resource, form(""));
+      return response.toObject().getString("data");
+  }
 
 }
