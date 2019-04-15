@@ -76,22 +76,27 @@ public class VirtualMachineLauncher extends ComputerLauncher {
 
     @Override
     public void launch(SlaveComputer slaveComputer, TaskListener taskListener) throws IOException, InterruptedException {
-        taskListener.getLogger().println("Virtual machine \"" + virtualMachineId
-                + "\" (Name \"" + slaveComputer.getDisplayName() + "\") is being reverted...");
-
+    		String taskId = null;
+    		JSONObject taskStatus = null;
         try {
+        	  
             Datacenter datacenter = findDatacenterInstance();
             Connector pve = datacenter.proxmoxInstance();
+            
+            if (!snapshotName.equals("current")) {
+            	taskListener.getLogger().println("Virtual machine \"" + virtualMachineId
+            			+ "\" (Name \"" + slaveComputer.getDisplayName() + "\") is being reverted...");
+            	//TODO: Check the status of this task (pass/fail) not just that its finished
+            	taskId = pve.rollbackQemuMachineSnapshot(datacenterNode, virtualMachineId, snapshotName);
+            	taskListener.getLogger().println("Proxmox returned: " + taskId);
 
-            //TODO: Check the status of this task (pass/fail) not just that its finished
-            String taskId = pve.rollbackQemuMachineSnapshot(datacenterNode, virtualMachineId, snapshotName);
-            taskListener.getLogger().println("Proxmox returned: " + taskId);
+            	//Wait for the task to finish
+            	taskStatus = pve.waitForTaskToFinish(datacenterNode, taskId);
+            	taskListener.getLogger().println("Task finished! Status object: " + taskStatus.toString());
+            }
 
-            //Wait for the task to finish
-            JSONObject taskStatus = pve.waitForTaskToFinish(datacenterNode, taskId);
-            taskListener.getLogger().println("Task finished! Status object: " + taskStatus.toString());
-
-            if (startVM) {
+            Boolean isvmIdRunning = pve.isQemuMachineRunning(datacenterNode, virtualMachineId);
+            if (startVM && !isvmIdRunning) {
                 taskListener.getLogger().println("Starting virtual machine...");
                 taskId = pve.startQemuMachine(datacenterNode, virtualMachineId);
                 taskStatus = pve.waitForTaskToFinish(datacenterNode, taskId);
@@ -121,15 +126,25 @@ public class VirtualMachineLauncher extends ComputerLauncher {
 
     @Override
     public void beforeDisconnect(SlaveComputer slaveComputer, TaskListener taskListener) {
-        taskListener.getLogger().println("Virtual machine \"" + virtualMachineId
-                + "\" (slave \"" + slaveComputer.getDisplayName() + "\") is being stopped.");
-
-        //Stop the virtual machine
+  			String taskId = null;
+  			JSONObject taskStatus = null;
+  			
+        //try to gracefully shutdown the virtual machine
         try {
+          	taskListener.getLogger().println("Virtual machine \"" + virtualMachineId
+              + "\" (slave \"" + slaveComputer.getDisplayName() + "\") is being shutdown.");
             Datacenter datacenter = findDatacenterInstance();
             Connector pve = datacenter.proxmoxInstance();
-            //TODO: Check the status of this task
-            pve.stopQemuMachine(datacenterNode, virtualMachineId);
+            taskId = pve.shutdownQemuMachine(datacenterNode, virtualMachineId);
+            taskStatus = pve.waitForTaskToFinish(datacenterNode, taskId);
+            if (!taskStatus.getString("exitstatus").equals("OK")) {
+            	//Graceful shutdown failed, so doing a stop.
+            	taskListener.getLogger().println("Virtual machine \"" + virtualMachineId
+                  + "\" (slave \"" + slaveComputer.getDisplayName() + "\") was not able to shutdown, doing a stop instead");
+              taskId = pve.stopQemuMachine(datacenterNode, virtualMachineId);
+              taskStatus = pve.waitForTaskToFinish(datacenterNode, taskId);
+            }
+            taskListener.getLogger().println("Task finished! Status object: " + taskStatus.toString());
         } catch (IOException e) {
             LOGGER.log(Level.SEVERE, "Exception: " + e.getMessage());
         } catch (JSONException e) {
