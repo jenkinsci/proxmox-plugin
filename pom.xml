@@ -3,13 +3,13 @@
     <parent>
         <groupId>org.jenkins-ci.plugins</groupId>
         <artifactId>plugin</artifactId>
-        <version>3.4</version>
+        <version>3.42</version>
         <relativePath />
     </parent>
 
 	<groupId>io.jenkins.plugins</groupId>
     <artifactId>proxmox</artifactId>
-    <version>0.3.0</version>
+    <version>0.3.1</version>
     <packaging>hpi</packaging>
 	<properties>
         <jenkins.version>2.89.4</jenkins.version>
@@ -48,7 +48,7 @@
     <pluginRepositories>
         <pluginRepository>
             <id>repo.jenkins-ci.org</id>
-            <url>http://repo.jenkins-ci.org/public/</url>
+            <url>https://repo.jenkins-ci.org/public/</url>
         </pluginRepository>
     </pluginRepositories>
 
