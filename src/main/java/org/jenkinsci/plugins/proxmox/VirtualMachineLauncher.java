@@ -1,23 +1,23 @@
 package org.jenkinsci.plugins.proxmox;
 
-import hudson.model.Hudson;
-import hudson.model.TaskListener;
-import hudson.model.Descriptor;
-import hudson.slaves.Cloud;
-import hudson.slaves.ComputerLauncher;
-import hudson.slaves.JNLPLauncher;
-import hudson.slaves.SlaveComputer;
-
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import javax.security.auth.login.LoginException;
+
 import org.jenkinsci.plugins.proxmox.pve2api.Connector;
 import org.kohsuke.stapler.DataBoundConstructor;
+
+import hudson.model.Descriptor;
+import hudson.model.TaskListener;
+import hudson.slaves.Cloud;
+import hudson.slaves.ComputerLauncher;
+import hudson.slaves.JNLPLauncher;
+import hudson.slaves.SlaveComputer;
+import jenkins.model.Jenkins;
 import us.monoid.json.JSONException;
 import us.monoid.json.JSONObject;
-
-import javax.security.auth.login.LoginException;
 
 /**
  * Controls launching of Proxmox virtual machines.
@@ -52,7 +52,7 @@ public class VirtualMachineLauncher extends ComputerLauncher {
 
     public Datacenter findDatacenterInstance() throws RuntimeException {
         if (datacenterDescription != null && virtualMachineId != null) {
-            for (Cloud cloud : Hudson.getInstance().clouds) {
+            for (Cloud cloud : Jenkins.getInstance().clouds) {
                 if (cloud instanceof Datacenter
                         && ((Datacenter) cloud).getDatacenterDescription().equals(datacenterDescription)) {
                     return (Datacenter) cloud;

@@ -1,29 +1,28 @@
 package org.jenkinsci.plugins.proxmox;
 
-import hudson.Extension;
-import hudson.model.Descriptor;
-import hudson.model.Hudson;
-import hudson.model.Slave;
-import hudson.model.Computer;
-import hudson.slaves.Cloud;
-import hudson.slaves.NodeProperty;
-import hudson.slaves.ComputerLauncher;
-import hudson.slaves.RetentionStrategy;
-import hudson.util.FormValidation;
-import hudson.util.ListBoxModel;
-
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.security.auth.login.LoginException;
+
 import org.jenkinsci.plugins.proxmox.pve2api.Connector;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
-import us.monoid.json.JSONException;
 
-import javax.security.auth.login.LoginException;
+import hudson.Extension;
+import hudson.model.Computer;
+import hudson.model.Descriptor;
+import hudson.model.Slave;
+import hudson.slaves.Cloud;
+import hudson.slaves.ComputerLauncher;
+import hudson.slaves.NodeProperty;
+import hudson.slaves.RetentionStrategy;
+import hudson.util.FormValidation;
+import hudson.util.ListBoxModel;
+import jenkins.model.Jenkins;
+import us.monoid.json.JSONException;
 
 public class VirtualMachineSlave extends Slave {
 
@@ -114,7 +113,7 @@ public class VirtualMachineSlave extends Slave {
         public ListBoxModel doFillDatacenterDescriptionItems() {
             ListBoxModel items = new ListBoxModel();
             items.add("[Select]", "");
-            for (Cloud cloud : Hudson.getInstance().clouds) {
+            for (Cloud cloud : Jenkins.getInstance().clouds) {
                 if (cloud instanceof Datacenter) {
                     //TODO: Possibly add the `datacenterDescription` as the `displayName` and `value` (http://javadoc.jenkins-ci.org/hudson/util/ListBoxModel.html)
                     //Add by `display name` and then the `value`
@@ -203,7 +202,7 @@ public class VirtualMachineSlave extends Slave {
 
         private Datacenter getDatacenterByDescription (String datacenterDescription) {
             if (datacenterDescription != null && !datacenterDescription.equals("")) {
-                for (Cloud cloud : Hudson.getInstance().clouds) {
+                for (Cloud cloud : Jenkins.getInstance().clouds) {
                     if (cloud instanceof Datacenter && ((Datacenter) cloud).getDatacenterDescription().equals(datacenterDescription)) {
                         return (Datacenter) cloud;
                     }

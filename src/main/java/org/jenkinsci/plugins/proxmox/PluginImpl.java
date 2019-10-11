@@ -1,11 +1,5 @@
 package org.jenkinsci.plugins.proxmox;
 
-import hudson.Plugin;
-import hudson.model.Hudson;
-import hudson.slaves.Cloud;
-import hudson.util.FormValidation;
-import hudson.util.ListBoxModel;
-
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
@@ -15,6 +9,12 @@ import java.util.logging.Logger;
 import javax.servlet.ServletException;
 
 import org.kohsuke.stapler.QueryParameter;
+
+import hudson.Plugin;
+import hudson.slaves.Cloud;
+import hudson.util.FormValidation;
+import hudson.util.ListBoxModel;
+import jenkins.model.Jenkins;
 
 public class PluginImpl extends Plugin {
 
@@ -45,7 +45,7 @@ public class PluginImpl extends Plugin {
     }
 
     private Datacenter getDatacenterByDescription(String datacenterDescription) {
-        for (Cloud cloud : Hudson.getInstance().clouds) {
+        for (Cloud cloud : Jenkins.getInstance().clouds) {
             if (cloud instanceof Datacenter) {
                 Datacenter datacenter = (Datacenter) cloud;
                 if (datacenterDescription != null
