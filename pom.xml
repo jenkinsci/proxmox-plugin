@@ -3,16 +3,16 @@
     <parent>
         <groupId>org.jenkins-ci.plugins</groupId>
         <artifactId>plugin</artifactId>
-        <version>3.42</version>
+        <version>3.51</version>
         <relativePath />
     </parent>
 
 	<groupId>io.jenkins.plugins</groupId>
     <artifactId>proxmox</artifactId>
-    <version>0.3.1</version>
+    <version>0.3.2</version>
     <packaging>hpi</packaging>
 	<properties>
-        <jenkins.version>2.170</jenkins.version>
+        <jenkins.version>2.178</jenkins.version>
         <java.level>8</java.level>
     </properties>
     <name>Jenkins Proxmox plugin</name>

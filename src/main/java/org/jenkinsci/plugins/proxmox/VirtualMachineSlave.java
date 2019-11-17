@@ -7,6 +7,7 @@ import java.util.Map;
 
 import javax.security.auth.login.LoginException;
 
+import org.jenkinsci.plugins.proxmox.VirtualMachineLauncher.RevertPolicy;
 import org.jenkinsci.plugins.proxmox.pve2api.Connector;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
@@ -26,24 +27,28 @@ import us.monoid.json.JSONException;
 
 public class VirtualMachineSlave extends Slave {
 
-    private String datacenterDescription;
+	private static final long serialVersionUID = 1L;
+
+	private String datacenterDescription;
     private String datacenterNode;
     private String snapshotName;
     private Integer virtualMachineId;
     private Boolean startVM;
     private int startupWaitingPeriodSeconds;
-
+    private RevertPolicy revertPolicy;
+    
     @DataBoundConstructor
     public VirtualMachineSlave(String name, String nodeDescription, String remoteFS, String numExecutors,
                                Mode mode, String labelString, ComputerLauncher delegateLauncher,
                                RetentionStrategy retentionStrategy, List<? extends NodeProperty<?>> nodeProperties,
                                String datacenterDescription, String datacenterNode, Integer virtualMachineId,
-                               String snapshotName, Boolean startVM, int startupWaitingPeriodSeconds)
+                               String snapshotName, Boolean startVM, int startupWaitingPeriodSeconds,
+                               RevertPolicy revertPolicy)
             throws
             Descriptor.FormException, IOException {
         super(name, nodeDescription, remoteFS, numExecutors, mode, labelString,
                 new VirtualMachineLauncher(delegateLauncher, datacenterDescription, datacenterNode, virtualMachineId,
-                        snapshotName, startVM, startupWaitingPeriodSeconds),
+                        snapshotName, startVM, startupWaitingPeriodSeconds, revertPolicy),
                 retentionStrategy, nodeProperties);
         this.datacenterDescription = datacenterDescription;
         this.datacenterNode = datacenterNode;
@@ -51,6 +56,7 @@ public class VirtualMachineSlave extends Slave {
         this.snapshotName = snapshotName;
         this.startVM = startVM;
         this.startupWaitingPeriodSeconds = startupWaitingPeriodSeconds;
+        this.revertPolicy = revertPolicy;
     }
 
     public String getDatacenterDescription() {
@@ -77,6 +83,10 @@ public class VirtualMachineSlave extends Slave {
         return startupWaitingPeriodSeconds;
     }
 
+    public RevertPolicy getRevertPolicy() {
+        return revertPolicy;
+    }
+    
     public ComputerLauncher getDelegateLauncher() {
         return ((VirtualMachineLauncher) getLauncher()).getDelegate();
     }
@@ -96,6 +106,7 @@ public class VirtualMachineSlave extends Slave {
         private Integer virtualMachineId;
         private String snapshotName;
         private Boolean startVM;
+        private RevertPolicy revertPolicy;
 
         public DescriptorImpl() {
             load();
@@ -113,7 +124,7 @@ public class VirtualMachineSlave extends Slave {
         public ListBoxModel doFillDatacenterDescriptionItems() {
             ListBoxModel items = new ListBoxModel();
             items.add("[Select]", "");
-            for (Cloud cloud : Jenkins.getInstance().clouds) {
+            for (Cloud cloud : Jenkins.get().clouds) {
                 if (cloud instanceof Datacenter) {
                     //TODO: Possibly add the `datacenterDescription` as the `displayName` and `value` (http://javadoc.jenkins-ci.org/hudson/util/ListBoxModel.html)
                     //Add by `display name` and then the `value`
@@ -180,7 +191,11 @@ public class VirtualMachineSlave extends Slave {
         public Boolean getStartVM() {
             return startVM;
         }
-
+        
+        public RevertPolicy getRevertPolicy() {
+            return revertPolicy;
+        }
+        
         public FormValidation doTestRollback (
                 @QueryParameter String datacenterDescription, @QueryParameter String datacenterNode,
                 @QueryParameter Integer virtualMachineId, @QueryParameter String snapshotName) {
@@ -202,7 +217,7 @@ public class VirtualMachineSlave extends Slave {
 
         private Datacenter getDatacenterByDescription (String datacenterDescription) {
             if (datacenterDescription != null && !datacenterDescription.equals("")) {
-                for (Cloud cloud : Jenkins.getInstance().clouds) {
+                for (Cloud cloud : Jenkins.get().clouds) {
                     if (cloud instanceof Datacenter && ((Datacenter) cloud).getDatacenterDescription().equals(datacenterDescription)) {
                         return (Datacenter) cloud;
                     }

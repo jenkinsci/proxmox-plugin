@@ -22,6 +22,12 @@
     <f:entry title="${%Start Virtual Machine}" field="startVM" help="/plugin/proxmox/help-vm-startVirtualMachine.html">
         <f:checkbox default="true" />
     </f:entry>
+    
+    <f:entry title="${%Revert policy}" field="revertPolicy" help="/plugin/proxmox/help-vm-revertPolicy.html">
+        <f:enum field="revertPolicy">
+            ${it.getLabel()}
+        </f:enum>
+    </f:entry>
 
     <f:entry title="${%Description}" help="/help/system-config/master-slave/description.html">
         <f:textbox field="nodeDescription"/>

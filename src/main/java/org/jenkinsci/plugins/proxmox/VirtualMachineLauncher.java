@@ -33,9 +33,28 @@ public class VirtualMachineLauncher extends ComputerLauncher {
     private Boolean startVM;
     private final int WAIT_TIME_MS;
 
+    public static enum RevertPolicy {
+
+        AFTER_CONNECT("After connect to the virtual machine"),
+        BEFORE_JOB("Before every job executing on the virtual machine");
+
+        final private String label;
+
+        private RevertPolicy(String policy) {
+            this.label = policy;
+        }
+
+        public String getLabel() {
+            return label;
+        }
+    }
+    
+    private final RevertPolicy revertPolicy;
+    
     @DataBoundConstructor
     public VirtualMachineLauncher(ComputerLauncher delegate, String datacenterDescription, String datacenterNode,
-                                  Integer virtualMachineId, String snapshotName, Boolean startVM, int waitingTimeSecs) {
+                                  Integer virtualMachineId, String snapshotName, Boolean startVM, int waitingTimeSecs,
+                                  RevertPolicy revertPolicy) {
         super();
         this.delegate = delegate;
         this.datacenterDescription = datacenterDescription;
@@ -44,6 +63,7 @@ public class VirtualMachineLauncher extends ComputerLauncher {
         this.snapshotName = snapshotName;
         this.startVM = startVM;
         this.WAIT_TIME_MS = waitingTimeSecs*1000;
+        this.revertPolicy = revertPolicy;
     }
 
     public ComputerLauncher getDelegate() {
@@ -52,7 +72,7 @@ public class VirtualMachineLauncher extends ComputerLauncher {
 
     public Datacenter findDatacenterInstance() throws RuntimeException {
         if (datacenterDescription != null && virtualMachineId != null) {
-            for (Cloud cloud : Jenkins.getInstance().clouds) {
+            for (Cloud cloud : Jenkins.get().clouds) {
                 if (cloud instanceof Datacenter
                         && ((Datacenter) cloud).getDatacenterDescription().equals(datacenterDescription)) {
                     return (Datacenter) cloud;
@@ -118,6 +138,9 @@ public class VirtualMachineLauncher extends ComputerLauncher {
     
     @Override
     public void launch(SlaveComputer slaveComputer, TaskListener taskListener) throws IOException, InterruptedException {
+    	if(revertPolicy == RevertPolicy.AFTER_CONNECT)
+    		revertSnapshot(slaveComputer, taskListener);
+
         delegate.launch(slaveComputer, taskListener);
     }
 
@@ -157,6 +180,9 @@ public class VirtualMachineLauncher extends ComputerLauncher {
 
     @Override
     public void beforeDisconnect(SlaveComputer slaveComputer, TaskListener taskListener) {
+    	if(revertPolicy == RevertPolicy.AFTER_CONNECT)
+    		shutdown(slaveComputer, taskListener);
+    	
         delegate.beforeDisconnect(slaveComputer, taskListener);
     }
 

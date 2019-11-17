@@ -20,12 +20,10 @@ import javax.net.ssl.*;
 import javax.security.auth.login.LoginException;
 
 public class Connector {
-    protected String hostname;
     protected Integer port;
     protected String username;
     protected String realm;
     protected String password;
-    protected Boolean ignoreSSL;
     protected String baseURL;
 
     private String authTicket;
@@ -79,16 +77,16 @@ public class Connector {
 
     public Connector(String hostname, String username, String realm, String password, Boolean ignoreSSL) {
         //TODO: Split the hostname to check for a port.
-        this.hostname = hostname;
         this.port = 8006;
         this.username = username;
         this.realm = realm;
         this.password = password;
-        this.ignoreSSL = ignoreSSL;
+
         if (ignoreSSL)
             ignoreAllCerts();
         else
             resetCachedSSLHelperObjects();
+        
         this.authTicketIssuedTimestamp = null;
         this.baseURL = "https://" + hostname + ":" + port.toString() + "/api2/json/";
     }

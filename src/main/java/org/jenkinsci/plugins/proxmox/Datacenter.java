@@ -136,24 +136,12 @@ public class Datacenter extends Cloud {
 
     @Extension
     public static final class DescriptorImpl extends Descriptor<Cloud> {
-
-        private String hostname;
-        private String username;
-        private String realm;
-        private String password;
-        private Boolean ignoreSSL;
-
         public String getDisplayName() {
             return "Proxmox Datacenter";
         }
 
         @Override
         public boolean configure(StaplerRequest req, JSONObject o) throws FormException {
-            hostname = o.getString("hostname");
-            username = o.getString("username");
-            realm = o.getString("realm");
-            password = o.getString("password");
-            ignoreSSL = o.getBoolean("ignoreSSL");
             save();
             return super.configure(req, o);
         }

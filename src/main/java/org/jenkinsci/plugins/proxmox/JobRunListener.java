@@ -45,7 +45,7 @@ public class JobRunListener extends RunListener<Run<?, ?> > {
           final VirtualMachineSlaveComputer slaveComputer = (VirtualMachineSlaveComputer) computer;
           final VirtualMachineLauncher launcher = (VirtualMachineLauncher) slave.getLauncher();
 
-          if (launcher.isLaunchSupported()) {
+          if (launcher.isLaunchSupported() && (slave.getRevertPolicy() == VirtualMachineLauncher.RevertPolicy.BEFORE_JOB)) {
               try {
                 slaveComputer.disconnect(OfflineCause.create(new Localizable(holder, "Disconnect before snapshot revert")));
                 launcher.revertSnapshot(slaveComputer, listener);
