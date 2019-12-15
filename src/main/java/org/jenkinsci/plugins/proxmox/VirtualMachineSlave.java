@@ -152,7 +152,7 @@ public class VirtualMachineSlave extends Slave {
             Datacenter datacenter = getDatacenterByDescription(datacenterDescription);
             if (datacenter != null) {
                 HashMap<String, Integer> machines = datacenter.getQemuMachines(datacenterNode);
-                for (Map.Entry me : machines.entrySet()) {
+                for (Map.Entry<String, Integer> me : machines.entrySet()) {
                     items.add(me.getKey().toString(), me.getValue().toString());
                 }
             }

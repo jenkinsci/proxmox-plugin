@@ -170,7 +170,7 @@ public class Datacenter extends Cloud {
         public FormValidation doCheckPassword(@QueryParameter String value) {
             return emptyStringValidation("Password", value);
         }
-
+        
         public FormValidation doTestConnection (
                 @QueryParameter String hostname, @QueryParameter String username, @QueryParameter String realm,
                 @QueryParameter String password, @QueryParameter Boolean ignoreSSL) {
