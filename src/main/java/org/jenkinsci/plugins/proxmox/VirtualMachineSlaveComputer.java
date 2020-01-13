@@ -1,6 +1,7 @@
 package org.jenkinsci.plugins.proxmox;
 
 import java.io.IOException;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 import org.jvnet.localizer.Localizable;
@@ -38,12 +39,16 @@ public class VirtualMachineSlaveComputer extends SlaveComputer {
 
             if (launcher.isLaunchSupported() && (slave.getRevertPolicy() == VirtualMachineLauncher.RevertPolicy.BEFORE_JOB)) {
                 try {
-                  disconnect(OfflineCause.create(new Localizable(holder, "Disconnect before snapshot revert")));
+                  final Future<?> disconnectFuture = disconnect(OfflineCause.create(new Localizable(holder, "Disconnect before snapshot revert")));
+                  
+                  disconnectFuture.get();
                   launcher.revertSnapshot(this, getListener());
                   launcher.launch(this, getListener());
                 } catch (IOException | InterruptedException e) {
                   getListener().getLogger().println("ERROR: Snapshot revert failed: " + e.getMessage());
-                }
+                } catch (ExecutionException e) {
+                  getListener().getLogger().println("ERROR: Exception while performing asynchronous disconnect: " + e.getMessage());
+				}
             }
         }
     }
