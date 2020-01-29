@@ -40,10 +40,15 @@ public class VirtualMachineSlaveComputer extends SlaveComputer {
             if (launcher.isLaunchSupported() && (slave.getRevertPolicy() == VirtualMachineLauncher.RevertPolicy.BEFORE_JOB)) {
                 try {
                   final Future<?> disconnectFuture = disconnect(OfflineCause.create(new Localizable(holder, "Disconnect before snapshot revert")));
-                  
                   disconnectFuture.get();
+                  getListener().getLogger().println("INFO: slave disconnected");
+
                   launcher.revertSnapshot(this, getListener());
+                  getListener().getLogger().println("INFO: snapshot reverted");
+
                   launcher.launch(this, getListener());
+                  getListener().getLogger().println("INFO: slave launched");
+
                 } catch (IOException | InterruptedException e) {
                   getListener().getLogger().println("ERROR: Snapshot revert failed: " + e.getMessage());
                 } catch (ExecutionException e) {

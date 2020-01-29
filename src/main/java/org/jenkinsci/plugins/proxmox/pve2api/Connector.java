@@ -1,5 +1,7 @@
 package org.jenkinsci.plugins.proxmox.pve2api;
 
+import static us.monoid.web.Resty.form;
+
 import java.io.IOException;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
@@ -9,17 +11,25 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSession;
+import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
+import javax.security.auth.login.LoginException;
+
 import us.monoid.json.JSONArray;
 import us.monoid.json.JSONException;
 import us.monoid.json.JSONObject;
 import us.monoid.web.JSONResource;
 import us.monoid.web.Resty;
-import static us.monoid.web.Resty.*;
-
-import javax.net.ssl.*;
-import javax.security.auth.login.LoginException;
 
 public class Connector {
+
+    public static final long WAIT_TIME_MS = 1000;
+
     protected Integer port;
     protected String username;
     protected String realm;
@@ -151,12 +161,15 @@ public class Connector {
       return isRunning;
   }
 
-    public JSONObject waitForTaskToFinish(String node, String taskId) throws IOException, LoginException, JSONException {
+    public JSONObject waitForTaskToFinish(String node, String taskId) throws IOException, LoginException, JSONException, InterruptedException {
         JSONObject lastTaskStatus = null;
         Boolean isRunning = true;
         while (isRunning) {
             lastTaskStatus = getTaskStatus(node, taskId);
             isRunning = (lastTaskStatus.getString("status").equals("running"));
+            if (isRunning) {
+                Thread.sleep(WAIT_TIME_MS);
+            }
         }
         return lastTaskStatus;
     }
