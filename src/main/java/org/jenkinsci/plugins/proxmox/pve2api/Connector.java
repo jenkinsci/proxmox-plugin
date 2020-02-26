@@ -20,12 +20,10 @@ import javax.net.ssl.*;
 import javax.security.auth.login.LoginException;
 
 public class Connector {
-    protected String hostname;
     protected Integer port;
     protected String username;
     protected String realm;
     protected String password;
-    protected Boolean ignoreSSL;
     protected String baseURL;
 
     private String authTicket;
@@ -79,16 +77,16 @@ public class Connector {
 
     public Connector(String hostname, String username, String realm, String password, Boolean ignoreSSL) {
         //TODO: Split the hostname to check for a port.
-        this.hostname = hostname;
         this.port = 8006;
         this.username = username;
         this.realm = realm;
         this.password = password;
-        this.ignoreSSL = ignoreSSL;
+
         if (ignoreSSL)
             ignoreAllCerts();
         else
             resetCachedSSLHelperObjects();
+        
         this.authTicketIssuedTimestamp = null;
         this.baseURL = "https://" + hostname + ":" + port.toString() + "/api2/json/";
     }
@@ -139,6 +137,19 @@ public class Connector {
         JSONResource response = getJSONResource("nodes/" + node + "/tasks/" + taskId + "/status");
         return response.toObject().getJSONObject("data");
     }
+    
+    public JSONObject getQemuMachineStatus(String node, Integer vmid) throws IOException, LoginException, JSONException {
+      JSONResource response = getJSONResource("nodes/" + node + "/qemu/" + vmid + "/status/current");
+      return response.toObject().getJSONObject("data");
+    }
+    
+    public Boolean isQemuMachineRunning(String node, Integer vmid) throws IOException, LoginException, JSONException {
+      JSONObject QemuMachineStatus = null;
+      Boolean isRunning = true;
+      QemuMachineStatus = getQemuMachineStatus(node, vmid);
+      isRunning = (QemuMachineStatus.getString("status").equals("running"));
+      return isRunning;
+  }
 
     public JSONObject waitForTaskToFinish(String node, String taskId) throws IOException, LoginException, JSONException {
         JSONObject lastTaskStatus = null;
@@ -192,5 +203,12 @@ public class Connector {
         JSONResource response = r.json(baseURL + resource, form(""));
         return response.toObject().getString("data");
     }
+    
+    public String shutdownQemuMachine(String node, Integer vmid) throws IOException, LoginException, JSONException {
+      Resty r = authedClient();
+      String resource = "nodes/" + node + "/qemu/" + vmid.toString() + "/status/shutdown";
+      JSONResource response = r.json(baseURL + resource, form(""));
+      return response.toObject().getString("data");
+  }
 
 }

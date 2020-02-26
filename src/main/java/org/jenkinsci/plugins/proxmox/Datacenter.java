@@ -1,28 +1,30 @@
 package org.jenkinsci.plugins.proxmox;
 
-import hudson.Util;
-import hudson.Extension;
-import hudson.model.Descriptor;
-import hudson.slaves.Cloud;
-import hudson.model.Label;
-import hudson.slaves.NodeProvisioner;
-import hudson.util.FormValidation;
-
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.security.auth.login.LoginException;
 
-import net.sf.json.JSONObject;
-
-import us.monoid.json.JSONException;
-
+import org.jenkinsci.plugins.proxmox.pve2api.Connector;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 
-import org.jenkinsci.plugins.proxmox.pve2api.Connector;
+import hudson.Extension;
+import hudson.Util;
+import hudson.model.Descriptor;
+import hudson.model.Label;
+import hudson.slaves.Cloud;
+import hudson.slaves.NodeProvisioner;
+import hudson.util.FormValidation;
+import net.sf.json.JSONObject;
+import us.monoid.json.JSONException;
 
 /**
  * Represents a Proxmox datacenter.
@@ -134,24 +136,12 @@ public class Datacenter extends Cloud {
 
     @Extension
     public static final class DescriptorImpl extends Descriptor<Cloud> {
-
-        private String hostname;
-        private String username;
-        private String realm;
-        private String password;
-        private Boolean ignoreSSL;
-
         public String getDisplayName() {
             return "Proxmox Datacenter";
         }
 
         @Override
         public boolean configure(StaplerRequest req, JSONObject o) throws FormException {
-            hostname = o.getString("hostname");
-            username = o.getString("username");
-            realm = o.getString("realm");
-            password = o.getString("password");
-            ignoreSSL = o.getBoolean("ignoreSSL");
             save();
             return super.configure(req, o);
         }
@@ -199,12 +189,13 @@ public class Datacenter extends Cloud {
                 }
 
                 Connector pveConnector = new Connector(hostname, username, realm, password, ignoreSSL);
-                pveConnector.login();
+                pveConnector.login();                                
                 return FormValidation.ok("Login successful");
 
             } catch (LoginException e) {
                 return FormValidation.error("Invalid login credentials");
             } catch (IOException e) {
+                LOGGER.log(Level.SEVERE, "Error: " + e.getMessage());
                 return FormValidation.error("Error: " + e.getMessage());
             }
         }
