@@ -3,7 +3,7 @@
     <parent>
         <groupId>org.jenkins-ci.plugins</groupId>
         <artifactId>plugin</artifactId>
-        <version>3.51</version>
+        <version>3.54</version>
         <relativePath />
     </parent>
 
@@ -11,10 +11,13 @@
     <artifactId>proxmox</artifactId>
     <version>0.3.2</version>
     <packaging>hpi</packaging>
+    
 	<properties>
-        <jenkins.version>2.178</jenkins.version>
+        <jenkins.version>2.195</jenkins.version>
+        <slf4jVersion>1.7.26</slf4jVersion>
         <java.level>8</java.level>
     </properties>
+    
     <name>Jenkins Proxmox plugin</name>
     <description>This plugin allows Jenkins to use Proxmox virtual machines as slaves.</description>
     <url>http://wiki.jenkins-ci.org/display/JENKINS/Proxmox+Plugin</url>
@@ -32,9 +35,9 @@
     </developers>
 
     <scm>
-	<connection>scm:git:ssh://github.com/jenkinsci/proxmox-plugin.git</connection>
-	<developerConnection>scm:git:ssh://git@github.com/jenkinsci/proxmox-plugin.git</developerConnection>
-        <url>https://github.com/jenkinsci/proxmox-plugin</url>
+		<connection>scm:git:ssh://github.com/jenkinsci/proxmox-plugin.git</connection>
+		<developerConnection>scm:git:ssh://git@github.com/jenkinsci/proxmox-plugin.git</developerConnection>
+	    <url>https://github.com/jenkinsci/proxmox-plugin</url>
     </scm>
 
     <!-- get every artifact through repo.jenkins-ci.org, which proxies all the artifacts that we need -->
@@ -65,4 +68,16 @@
             <scope>compile</scope>
         </dependency>
     </dependencies>
+    
+    <dependencyManagement>
+	    <dependencies>
+	        <dependency>
+	            <groupId>org.jenkins-ci.main</groupId>
+	            <artifactId>jenkins-bom</artifactId>
+	            <version>${jenkins.version}</version>
+	            <type>pom</type>
+	            <scope>import</scope>
+	        </dependency>	    
+	    </dependencies>
+    </dependencyManagement>
 </project>

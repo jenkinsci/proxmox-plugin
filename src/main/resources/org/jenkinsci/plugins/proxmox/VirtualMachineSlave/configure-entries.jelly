@@ -34,7 +34,7 @@
     </f:entry>
 
     <f:entry title="${%Startup Idle (sec)}" field="startupWaitingPeriodSeconds" help="/plugin/proxmox/help-vm-waitingPeriod.html">
-        <f:textbox default="60" checkUrl="'${rootURL}/plugin/proxmox/checkStartupWaitingPeriodSeconds?secsValue='+this.value"/>
+        <f:number default="60" clazz="number" min="0" step="1"/>
     </f:entry>
 
     <f:entry title="${%# of executors}" field="numExecutors">

@@ -173,6 +173,8 @@ public class VirtualMachineLauncher extends ComputerLauncher {
             LOGGER.log(Level.SEVERE, "Exception: " + e.getMessage());
         } catch (JSONException e) {
             LOGGER.log(Level.SEVERE, "Parsing JSON: " + e.getMessage());
+        } catch (InterruptedException e) {
+            LOGGER.log(Level.SEVERE, "Waiting for task completion failed: " + e.getMessage());
         } catch (LoginException e) {
             LOGGER.log(Level.WARNING, "Login failed: " + e.getMessage());
         }
