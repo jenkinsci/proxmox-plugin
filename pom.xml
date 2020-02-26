@@ -9,7 +9,7 @@
 
 	<groupId>io.jenkins.plugins</groupId>
     <artifactId>proxmox</artifactId>
-    <version>0.3.2</version>
+    <version>0.4.0-SNAPSHOT</version>
     <packaging>hpi</packaging>
     
 	<properties>
@@ -20,7 +20,7 @@
     
     <name>Jenkins Proxmox plugin</name>
     <description>This plugin allows Jenkins to use Proxmox virtual machines as slaves.</description>
-    <url>http://wiki.jenkins-ci.org/display/JENKINS/Proxmox+Plugin</url>
+    <url>https://github.com/jenkinsci/proxmox-plugin</url>
 
     <organization>
         <name>Dynamo-Media</name>
