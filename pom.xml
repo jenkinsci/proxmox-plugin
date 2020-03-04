@@ -21,6 +21,13 @@
     <name>Jenkins Proxmox plugin</name>
     <description>This plugin allows Jenkins to use Proxmox virtual machines as slaves.</description>
     <url>https://github.com/jenkinsci/proxmox-plugin</url>
+	<licenses>
+        <license>
+            <name>MIT License</name>
+            <url>https://www.opensource.org/licenses/mit-license.php</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
 
     <organization>
         <name>Dynamo-Media</name>
@@ -31,6 +38,11 @@
             <id>justnom</id>
             <name>Harry Macey</name>
             <email>harry.macey@gmail.com</email>
+        </developer>
+		<developer>
+            <id>maxhy</id>
+            <name>Maxime C.</name>
+            <email>maxime@islog.com</email>
         </developer>
     </developers>
 
