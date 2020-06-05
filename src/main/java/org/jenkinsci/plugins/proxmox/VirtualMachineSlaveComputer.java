@@ -3,6 +3,7 @@ package org.jenkinsci.plugins.proxmox;
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.jvnet.localizer.Localizable;
 import org.jvnet.localizer.ResourceBundleHolder;
@@ -22,12 +23,23 @@ public class VirtualMachineSlaveComputer extends SlaveComputer {
 	 * 
 	 */
 	private final static ResourceBundleHolder holder = ResourceBundleHolder.get(Messages.class);
+	private AtomicBoolean isRevertingSnapshot = new AtomicBoolean(false);
 
     public VirtualMachineSlaveComputer(Slave slave) {
         super(slave);
     }
 
     @Override
+	public void tryReconnect() {
+    	if(isRevertingSnapshot.get()) {
+    		getListener().getLogger().println("INFO: trying to reconnect while snapshot revert - ignoring");
+    		return;
+    	}	
+		
+		super.tryReconnect();
+	}
+
+	@Override
     public void taskAccepted(Executor executor, Queue.Task task) {
         super.taskAccepted(executor, task);
 
@@ -39,20 +51,23 @@ public class VirtualMachineSlaveComputer extends SlaveComputer {
 
             if (launcher.isLaunchSupported() && (slave.getRevertPolicy() == VirtualMachineLauncher.RevertPolicy.BEFORE_JOB)) {
                 try {
-                  final Future<?> disconnectFuture = disconnect(OfflineCause.create(new Localizable(holder, "Disconnect before snapshot revert")));
-                  disconnectFuture.get();
-                  getListener().getLogger().println("INFO: slave disconnected");
+                	isRevertingSnapshot.set(true);
 
-                  launcher.revertSnapshot(this, getListener());
-                  getListener().getLogger().println("INFO: snapshot reverted");
+                	final Future<?> disconnectFuture = disconnect(OfflineCause.create(new Localizable(holder, "Disconnect before snapshot revert")));
+                	disconnectFuture.get();
+                	getListener().getLogger().println("INFO: slave disconnected");
 
-                  launcher.launch(this, getListener());
-                  getListener().getLogger().println("INFO: slave launched");
+                	launcher.revertSnapshot(this, getListener());
+                	getListener().getLogger().println("INFO: snapshot reverted");
 
+                	launcher.launch(this, getListener());
+                	getListener().getLogger().println("INFO: slave launched");
                 } catch (IOException | InterruptedException e) {
-                  getListener().getLogger().println("ERROR: Snapshot revert failed: " + e.getMessage());
+                	getListener().getLogger().println("ERROR: Snapshot revert failed: " + e.getMessage());
                 } catch (ExecutionException e) {
-                  getListener().getLogger().println("ERROR: Exception while performing asynchronous disconnect: " + e.getMessage());
+                	getListener().getLogger().println("ERROR: Exception while performing asynchronous disconnect: " + e.getMessage());
+                } finally {
+                	isRevertingSnapshot.set(false);
 				}
             }
         }
