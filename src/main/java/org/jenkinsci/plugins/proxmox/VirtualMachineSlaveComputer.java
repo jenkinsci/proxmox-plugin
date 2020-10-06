@@ -5,10 +5,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.jvnet.localizer.Localizable;
-import org.jvnet.localizer.ResourceBundleHolder;
-
-import hudson.Messages;
 import hudson.model.Executor;
 import hudson.model.Node;
 import hudson.model.Queue;
@@ -18,11 +14,6 @@ import hudson.slaves.SlaveComputer;
 
 public class VirtualMachineSlaveComputer extends SlaveComputer {
 
-	/**
-	 * The resource bundle reference
-	 * 
-	 */
-	private final static ResourceBundleHolder holder = ResourceBundleHolder.get(Messages.class);
 	private AtomicBoolean isRevertingSnapshot = new AtomicBoolean(false);
 
     public VirtualMachineSlaveComputer(Slave slave) {
@@ -34,8 +25,8 @@ public class VirtualMachineSlaveComputer extends SlaveComputer {
     	if(isRevertingSnapshot.get()) {
     		getListener().getLogger().println("INFO: trying to reconnect while snapshot revert - ignoring");
     		return;
-    	}	
-		
+    	}
+
 		super.tryReconnect();
 	}
 
@@ -53,7 +44,7 @@ public class VirtualMachineSlaveComputer extends SlaveComputer {
                 try {
                 	isRevertingSnapshot.set(true);
 
-                	final Future<?> disconnectFuture = disconnect(OfflineCause.create(new Localizable(holder, "Disconnect before snapshot revert")));
+                	final Future<?> disconnectFuture = disconnect(OfflineCause.create(Messages._VirtualMachineSlaveComputer_disconnectBeforeSnapshotRevert()));
                 	disconnectFuture.get();
                 	getListener().getLogger().println("INFO: slave disconnected");
 
