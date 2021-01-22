@@ -94,7 +94,29 @@ public class VirtualMachineLauncher extends ComputerLauncher {
         return overrideLaunchSupported;
     }
 
-    public void revertSnapshot(SlaveComputer slaveComputer, TaskListener taskListener) throws IOException, InterruptedException {
+    public void startSlaveIfNeeded(TaskListener taskListener) throws IOException, InterruptedException {
+        String taskId = null;
+        JSONObject taskStatus = null;
+        try {
+            Datacenter datacenter = findDatacenterInstance();
+            Connector pve = datacenter.proxmoxInstance();
+            Boolean isvmIdRunning = pve.isQemuMachineRunning(datacenterNode, virtualMachineId);
+            if (!isvmIdRunning) {
+                taskListener.getLogger().println("Starting virtual machine...");
+                taskId = pve.startQemuMachine(datacenterNode, virtualMachineId);
+                taskStatus = pve.waitForTaskToFinish(datacenterNode, taskId);
+                taskListener.getLogger().println("Task finished! Status object: " + taskStatus.toString());
+            }
+        } catch (IOException e) {
+            taskListener.getLogger().println("ERROR: IOException: " + e.getMessage());
+        } catch (JSONException e) {
+            taskListener.getLogger().println("ERROR: Parsing JSON: " + e.getMessage());
+        } catch (LoginException e) {
+            taskListener.getLogger().println("ERROR: Login failed: " + e.getMessage());
+        }
+    }
+
+    public void revertSnapshot(SlaveComputer slaveComputer, TaskListener taskListener) throws InterruptedException {
         String taskId = null;
         JSONObject taskStatus = null;
 
@@ -115,11 +137,8 @@ public class VirtualMachineLauncher extends ComputerLauncher {
             }
   
             Boolean isvmIdRunning = pve.isQemuMachineRunning(datacenterNode, virtualMachineId);
-            if (startVM && !isvmIdRunning) {
-                taskListener.getLogger().println("Starting virtual machine...");
-                taskId = pve.startQemuMachine(datacenterNode, virtualMachineId);
-                taskStatus = pve.waitForTaskToFinish(datacenterNode, taskId);
-                taskListener.getLogger().println("Task finished! Status object: " + taskStatus.toString());
+            if (startVM) {
+                startSlaveIfNeeded(taskListener);
             }
   
         } catch (IOException e) {
@@ -138,8 +157,13 @@ public class VirtualMachineLauncher extends ComputerLauncher {
     
     @Override
     public void launch(SlaveComputer slaveComputer, TaskListener taskListener) throws IOException, InterruptedException {
-    	if(revertPolicy == RevertPolicy.AFTER_CONNECT)
-    		revertSnapshot(slaveComputer, taskListener);
+        if (revertPolicy == RevertPolicy.AFTER_CONNECT) {
+            revertSnapshot(slaveComputer, taskListener);
+        } else {
+            if (startVM) {
+                startSlaveIfNeeded(taskListener);
+            }
+        }
 
         delegate.launch(slaveComputer, taskListener);
     }
