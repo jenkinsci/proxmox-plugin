@@ -136,7 +136,6 @@ public class VirtualMachineLauncher extends ComputerLauncher {
               taskListener.getLogger().println("Task finished! Status object: " + taskStatus.toString());
             }
   
-            Boolean isvmIdRunning = pve.isQemuMachineRunning(datacenterNode, virtualMachineId);
             if (startVM) {
                 startSlaveIfNeeded(taskListener);
             }

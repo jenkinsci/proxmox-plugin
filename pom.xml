@@ -3,7 +3,7 @@
     <parent>
         <groupId>org.jenkins-ci.plugins</groupId>
         <artifactId>plugin</artifactId>
-        <version>3.54</version>
+        <version>4.24</version>
         <relativePath />
     </parent>
 
@@ -13,7 +13,7 @@
     <packaging>hpi</packaging>
     
 	<properties>
-        <jenkins.version>2.195</jenkins.version>
+        <jenkins.version>2.303.1</jenkins.version>
         <slf4jVersion>1.7.26</slf4jVersion>
         <java.level>8</java.level>
     </properties>
@@ -31,7 +31,7 @@
 
     <organization>
         <name>Dynamo-Media</name>
-        <url>http://www.dynamo-media.com</url>
+        <url>https://www.dynamo-media.com</url>
     </organization>
     <developers>
         <developer>
@@ -72,7 +72,7 @@
         <dependency>
             <groupId>org.json</groupId>
             <artifactId>json</artifactId>
-            <version>20090211</version>
+            <version>20210307</version>
         </dependency>
         <dependency>
             <groupId>us.monoid.web</groupId>
