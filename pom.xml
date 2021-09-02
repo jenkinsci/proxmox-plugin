@@ -9,7 +9,7 @@
 
 	<groupId>org.jenkins-ci.plugins</groupId>
     <artifactId>proxmox</artifactId>
-    <version>0.4.2</version>
+    <version>0.4.3-SNAPSHOT</version>
     <packaging>hpi</packaging>
     
 	<properties>
@@ -50,7 +50,7 @@
 		<connection>scm:git:ssh://github.com/jenkinsci/proxmox-plugin.git</connection>
 		<developerConnection>scm:git:ssh://git@github.com/jenkinsci/proxmox-plugin.git</developerConnection>
 	    <url>https://github.com/jenkinsci/proxmox-plugin</url>
-      <tag>proxmox-0.4.2</tag>
+      <tag>HEAD</tag>
   </scm>
 
     <!-- get every artifact through repo.jenkins-ci.org, which proxies all the artifacts that we need -->
