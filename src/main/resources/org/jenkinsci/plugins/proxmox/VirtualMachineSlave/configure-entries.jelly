@@ -51,6 +51,7 @@
 
     <f:slave-mode name="mode" node="${it}"/>
 
+	<j:set var="itDescriptor" value="${descriptor}"/>
     <f:dropdownList name="slave.delegateLauncher" title="${%Secondary launch method}"
                     help="${descriptor.getHelpFile('launcher')}">
         <j:forEach var="d" items="${descriptor.computerLauncherDescriptors(it)}">
@@ -60,6 +61,7 @@
                 <j:set var="descriptor" value="${d}"/>
                 <j:set var="instance"
                        value="${it.delegateLauncher.descriptor==d ? it.delegateLauncher : null}"/>
+			    <f:class-entry descriptor="${d}" />
                 <st:include from="${d}" page="${d.configPage}" optional="true"/>
             </f:dropdownListBlock>
         </j:forEach>
@@ -70,7 +72,7 @@
     <j:if test="${retentionStrategies.size() gt 1}">
         <f:dropdownList name="slave.retentionStrategy" title="${%Availability}"
                         help="/help/system-config/master-slave/availability.html">
-            <j:forEach var="d" items="${h.getRetentionStrategyDescriptors()}">
+            <j:forEach var="d" items="${retentionStrategies}">
                 <j:if test="${d != null}">
                     <f:dropdownListBlock value="${d.clazz.name}" name="${d.displayName}"
                                          selected="${it.retentionStrategy.descriptor==d}"
@@ -78,6 +80,7 @@
                         <j:set var="descriptor" value="${d}"/>
                         <j:set var="instance"
                                value="${it.retentionStrategy.descriptor==d ? it.retentionStrategy : null}"/>
+					    <f:class-entry descriptor="${d}" />
                         <st:include from="${d}" page="${d.configPage}" optional="true"/>
                     </f:dropdownListBlock>
                 </j:if>
