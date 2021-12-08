@@ -1,6 +1,7 @@
 package org.jenkinsci.plugins.proxmox;
 
 import java.io.IOException;
+import java.io.ObjectStreamException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -13,6 +14,7 @@ import hudson.model.Descriptor;
 import hudson.model.TaskListener;
 import hudson.slaves.Cloud;
 import hudson.slaves.ComputerLauncher;
+import hudson.slaves.DelegatingComputerLauncher;
 import hudson.slaves.JNLPLauncher;
 import hudson.slaves.SlaveComputer;
 import jenkins.model.Jenkins;
@@ -22,16 +24,21 @@ import us.monoid.json.JSONObject;
 /**
  * Controls launching of Proxmox virtual machines.
  */
-public class VirtualMachineLauncher extends ComputerLauncher {
+public class VirtualMachineLauncher extends DelegatingComputerLauncher {
 
     private static final Logger LOGGER = Logger.getLogger(VirtualMachineLauncher.class.getName());
-    private ComputerLauncher delegate;
+
+    @Deprecated
+    private transient ComputerLauncher delegate;
+    @Deprecated
+    private transient int WAIT_TIME_MS;
+
     private String datacenterDescription;
     private String datacenterNode;
     private Integer virtualMachineId;
     private String snapshotName;
     private Boolean startVM;
-    private final int WAIT_TIME_MS;
+    private int waitingTimeSecs;
 
     public static enum RevertPolicy {
 
@@ -52,22 +59,39 @@ public class VirtualMachineLauncher extends ComputerLauncher {
     private final RevertPolicy revertPolicy;
     
     @DataBoundConstructor
-    public VirtualMachineLauncher(ComputerLauncher delegate, String datacenterDescription, String datacenterNode,
+    public VirtualMachineLauncher(ComputerLauncher launcher, String datacenterDescription, String datacenterNode,
                                   Integer virtualMachineId, String snapshotName, Boolean startVM, int waitingTimeSecs,
                                   RevertPolicy revertPolicy) {
-        super();
-        this.delegate = delegate;
+        super(launcher);
         this.datacenterDescription = datacenterDescription;
         this.datacenterNode = datacenterNode;
         this.virtualMachineId = virtualMachineId;
         this.snapshotName = snapshotName;
         this.startVM = startVM;
-        this.WAIT_TIME_MS = waitingTimeSecs*1000;
+        this.waitingTimeSecs = waitingTimeSecs;
         this.revertPolicy = revertPolicy;
     }
 
+    /**
+     * Migrates instances from the old parent class to the new parent class.
+     * @return the deserialized instance.
+     * @throws ObjectStreamException if something went wrong.
+     */
+    private Object readResolve() throws ObjectStreamException {
+        if (delegate != null) {
+            return new VirtualMachineLauncher(delegate, datacenterDescription, datacenterNode, virtualMachineId,
+                    snapshotName, startVM, WAIT_TIME_MS / 1000, revertPolicy);
+        }
+        return this;
+    }
+
+    /**
+     * @return actual launcher
+     * @deprecated use {@link #getLauncher()}
+     */
+    @Deprecated
     public ComputerLauncher getDelegate() {
-        return delegate;
+        return launcher;
     }
 
     public Datacenter findDatacenterInstance() throws RuntimeException {
@@ -85,10 +109,10 @@ public class VirtualMachineLauncher extends ComputerLauncher {
     @Override
     public boolean isLaunchSupported() {
         //TODO: Add this into the settings for node setup
-        boolean overrideLaunchSupported = delegate.isLaunchSupported();
+        boolean overrideLaunchSupported = launcher.isLaunchSupported();
         //Support launching for the JNLPLauncher, so the `launch` function gets called
         //and the VM can be reset to a snapshot.
-        if (delegate instanceof JNLPLauncher) {
+        if (launcher instanceof JNLPLauncher) {
             overrideLaunchSupported = true;
         }
         return overrideLaunchSupported;
@@ -149,8 +173,8 @@ public class VirtualMachineLauncher extends ComputerLauncher {
         }
   
         //Ignore the wait period for a JNLP agent as it connects back to the Jenkins instance.
-        if (!(delegate instanceof JNLPLauncher)) {
-            Thread.sleep(WAIT_TIME_MS);
+        if (!(launcher instanceof JNLPLauncher)) {
+            Thread.sleep(waitingTimeSecs * 1000);
         }
     }
     
@@ -164,14 +188,9 @@ public class VirtualMachineLauncher extends ComputerLauncher {
             }
         }
 
-        delegate.launch(slaveComputer, taskListener);
+        launcher.launch(slaveComputer, taskListener);
     }
 
-    @Override
-    public synchronized void afterDisconnect(SlaveComputer slaveComputer, TaskListener taskListener) {
-        delegate.afterDisconnect(slaveComputer, taskListener);
-    }
-    
     public void shutdown(SlaveComputer slaveComputer, TaskListener taskListener) {
         String taskId = null;
         JSONObject taskStatus = null;
@@ -208,7 +227,7 @@ public class VirtualMachineLauncher extends ComputerLauncher {
     	if(revertPolicy == RevertPolicy.AFTER_CONNECT)
     		shutdown(slaveComputer, taskListener);
     	
-        delegate.beforeDisconnect(slaveComputer, taskListener);
+    	super.beforeDisconnect(slaveComputer, taskListener);
     }
 
     @Override

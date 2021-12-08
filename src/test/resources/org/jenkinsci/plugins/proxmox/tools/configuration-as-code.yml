@@ -1,0 +1,32 @@
+jenkins:
+  systemMessage: "Hello World"
+  agentProtocols:
+    - "JNLP4-connect"
+  clouds:
+    - datacenter:
+        hostname: "company-proxmox"
+        ignoreSSL: true
+        password: "proxmox-pass"
+        realm: "pve"
+        username: "proxmox-user"
+  nodes:
+    - virtualMachineSlave:
+        datacenterDescription: "proxmox-user@pve - company-proxmox"
+        datacenterNode: "proxmox-node"
+        launcher:
+          jnlp
+        labelString: "proxmox-label"
+        mode: EXCLUSIVE
+        name: "proxmox-vm"
+        numExecutors: 1
+        remoteFS: "/home/jenkins"
+        retentionStrategy:
+          demand:
+            idleDelay: 1
+            inDemandDelay: 0
+        revertPolicy: BEFORE_JOB
+        snapshotName: "proxmox-snapshot"
+        startVM: true
+        startupWaitingPeriodSeconds: 60
+        virtualMachineId: 42
+        

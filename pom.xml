@@ -7,12 +7,12 @@
         <relativePath />
     </parent>
 
-	<groupId>org.jenkins-ci.plugins</groupId>
+    <groupId>org.jenkins-ci.plugins</groupId>
     <artifactId>proxmox</artifactId>
     <version>0.4.3-SNAPSHOT</version>
     <packaging>hpi</packaging>
     
-	<properties>
+    <properties>
         <jenkins.version>2.303.1</jenkins.version>
         <slf4jVersion>1.7.26</slf4jVersion>
         <java.level>8</java.level>
@@ -21,7 +21,7 @@
     <name>Jenkins Proxmox plugin</name>
     <description>This plugin allows Jenkins to use Proxmox virtual machines as slaves.</description>
     <url>https://github.com/jenkinsci/proxmox-plugin</url>
-	<licenses>
+    <licenses>
         <license>
             <name>MIT License</name>
             <url>https://www.opensource.org/licenses/mit-license.php</url>
@@ -39,7 +39,7 @@
             <name>Harry Macey</name>
             <email>harry.macey@gmail.com</email>
         </developer>
-		<developer>
+        <developer>
             <id>maxhy</id>
             <name>Maxime C.</name>
             <email>maxime@islog.com</email>
@@ -47,9 +47,9 @@
     </developers>
 
     <scm>
-		<connection>scm:git:ssh://github.com/jenkinsci/proxmox-plugin.git</connection>
-		<developerConnection>scm:git:ssh://git@github.com/jenkinsci/proxmox-plugin.git</developerConnection>
-	    <url>https://github.com/jenkinsci/proxmox-plugin</url>
+        <connection>scm:git:ssh://github.com/jenkinsci/proxmox-plugin.git</connection>
+        <developerConnection>scm:git:ssh://git@github.com/jenkinsci/proxmox-plugin.git</developerConnection>
+        <url>https://github.com/jenkinsci/proxmox-plugin</url>
       <tag>HEAD</tag>
   </scm>
 
@@ -80,17 +80,27 @@
             <version>0.3.2</version>
             <scope>compile</scope>
         </dependency>
+        <dependency>
+            <groupId>io.jenkins</groupId>
+            <artifactId>configuration-as-code</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.jenkins.configuration-as-code</groupId>
+            <artifactId>test-harness</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
     
     <dependencyManagement>
-	    <dependencies>
-	        <dependency>
-	            <groupId>org.jenkins-ci.main</groupId>
-	            <artifactId>jenkins-bom</artifactId>
-	            <version>${jenkins.version}</version>
-	            <type>pom</type>
-	            <scope>import</scope>
-	        </dependency>	    
-	    </dependencies>
+        <dependencies>
+            <dependency>
+                <groupId>io.jenkins.tools.bom</groupId>
+                <artifactId>bom-2.303.x</artifactId>
+                <version>1008.vb9e22885c9cf</version>
+                <scope>import</scope>
+                <type>pom</type>
+            </dependency>
+        </dependencies>
     </dependencyManagement>
 </project>

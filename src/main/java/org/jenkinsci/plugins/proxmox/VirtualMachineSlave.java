@@ -1,9 +1,14 @@
 package org.jenkinsci.plugins.proxmox;
 
+import static java.util.Collections.emptyList;
+import static java.util.Optional.ofNullable;
+
 import java.io.IOException;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import javax.security.auth.login.LoginException;
 
@@ -49,7 +54,7 @@ public class VirtualMachineSlave extends Slave {
         super(name, nodeDescription, remoteFS, numExecutors, mode, labelString,
                 new VirtualMachineLauncher(delegateLauncher, datacenterDescription, datacenterNode, virtualMachineId,
                         snapshotName, startVM, startupWaitingPeriodSeconds, revertPolicy),
-                retentionStrategy, nodeProperties);
+                retentionStrategy, ofNullable(nodeProperties).orElse(emptyList()));
         this.datacenterDescription = datacenterDescription;
         this.datacenterNode = datacenterNode;
         this.virtualMachineId = virtualMachineId;
@@ -88,7 +93,7 @@ public class VirtualMachineSlave extends Slave {
     }
     
     public ComputerLauncher getDelegateLauncher() {
-        return ((VirtualMachineLauncher) getLauncher()).getDelegate();
+        return ((VirtualMachineLauncher) getLauncher()).getLauncher();
     }
 
     @Override
