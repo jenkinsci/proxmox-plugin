@@ -86,8 +86,17 @@ public class Connector {
     }
 
     public Connector(String hostname, String username, String realm, String password, Boolean ignoreSSL) {
-        //TODO: Split the hostname to check for a port.
         this.port = 8006;
+		// Parse hostname for port information
+		try {
+			URI uri = new URI("https://" + hostname);
+			if (uri.getPort() != -1) {
+				hostname = uri.getHost();
+				port = uri.getPort();
+			}
+		} catch (URISyntaxException e) {
+			e.printStackTrace();
+		}
         this.username = username;
         this.realm = realm;
         this.password = password;
