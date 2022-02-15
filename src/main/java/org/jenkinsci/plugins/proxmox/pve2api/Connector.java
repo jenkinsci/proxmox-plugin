@@ -19,6 +19,8 @@ import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 import javax.security.auth.login.LoginException;
+import java.net.URI;
+import java.net.URISyntaxException;
 
 import us.monoid.json.JSONArray;
 import us.monoid.json.JSONException;
