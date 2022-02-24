@@ -1,6 +1,0 @@
-- datacenter:
-    hostname: "company-proxmox"
-    ignoreSSL: true
-    password: "proxmox-pass"
-    realm: "pve"
-    username: "proxmox-user"

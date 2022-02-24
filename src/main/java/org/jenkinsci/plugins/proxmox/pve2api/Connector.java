@@ -28,6 +28,8 @@ import us.monoid.json.JSONObject;
 import us.monoid.web.JSONResource;
 import us.monoid.web.Resty;
 
+import hudson.util.Secret;
+
 public class Connector {
 
     public static final long WAIT_TIME_MS = 1000;
@@ -35,7 +37,7 @@ public class Connector {
     protected Integer port;
     protected String username;
     protected String realm;
-    protected String password;
+    protected Secret password;
     protected String baseURL;
 
     private String authTicket;
@@ -83,11 +85,11 @@ public class Connector {
             HttpsURLConnection.setDefaultHostnameVerifier(cachedHostnameVerifier);
     }
 
-    public Connector(String hostname, String username, String realm, String password) {
+    public Connector(String hostname, String username, String realm, Secret password) {
         this(hostname, username, realm, password, false);
     }
 
-    public Connector(String hostname, String username, String realm, String password, Boolean ignoreSSL) {
+    public Connector(String hostname, String username, String realm, Secret password, Boolean ignoreSSL) {
         this.port = 8006;
 		// Parse hostname for port information
 		try {
@@ -115,7 +117,7 @@ public class Connector {
     public void login() throws IOException, LoginException {
         Resty r = new Resty();
         JSONResource authTickets = r.json(baseURL + "access/ticket",
-                form("username=" + username + "@" + realm + "&password=" + password));
+                form("username=" + username + "@" + realm + "&password=" + password.getPlainText()));
         try {
             authTicket = authTickets.get("data.ticket").toString();
             csrfPreventionToken = authTickets.get("data.CSRFPreventionToken").toString();

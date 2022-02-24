@@ -10,6 +10,8 @@ import io.jenkins.plugins.casc.ConfiguratorRegistry;
 import io.jenkins.plugins.casc.misc.ConfiguredWithCode;
 import io.jenkins.plugins.casc.misc.JenkinsConfiguredWithCodeRule;
 import io.jenkins.plugins.casc.model.CNode;
+import io.jenkins.plugins.casc.model.Mapping;
+import hudson.util.Secret;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -30,6 +32,8 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.core.Is.is;
+import static org.jvnet.hudson.test.JenkinsMatchers.hasPlainText;
+import static java.util.Objects.requireNonNull;
 
 public class ConfigurationAsCodeTest {
 
@@ -43,7 +47,7 @@ public class ConfigurationAsCodeTest {
         assertThat(cloud.getHostname(), is("company-proxmox"));
         assertThat(cloud.getRealm(), is("pve"));
         assertThat(cloud.getUsername(), is("proxmox-user"));
-        assertThat(cloud.getPassword(), is("proxmox-pass"));
+        assertThat(cloud.getPassword(), hasPlainText("proxmox-pass"));
         assertThat(cloud.getIgnoreSSL(), is(true));
 
         List<Computer> computers = Arrays.asList(r.jenkins.getComputers());
@@ -72,11 +76,19 @@ public class ConfigurationAsCodeTest {
     public void should_support_configuration_export() throws Exception {
         ConfiguratorRegistry registry = ConfiguratorRegistry.get();
         ConfigurationContext context = new ConfigurationContext(registry);
-        final CNode cloud = getJenkinsRoot(context).get("clouds");
+        final Mapping cloud = getJenkinsRoot(context).get("clouds").asSequence().get(0).asMapping();
 
         String exported = toYamlString(cloud);
+		Secret password = requireNonNull(Secret.decrypt(cloud.get("datacenter").asMapping().getScalarValue("password")));
 
-        String expected = toStringFromYamlFile(this, "expected_output.yml");
+        String expected = String.join("\n",
+				"datacenter:",
+                "  hostname: \"company-proxmox\"",
+                "  ignoreSSL: true",
+                "  password: \"" + password.getEncryptedValue() + "\"",
+                "  realm: \"pve\"",
+                "  username: \"proxmox-user\"",
+                "");
 
         assertThat(exported, is(expected));
     }

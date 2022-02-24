@@ -18,6 +18,7 @@ import org.kohsuke.stapler.StaplerRequest;
 
 import hudson.Extension;
 import hudson.Util;
+import hudson.util.Secret;
 import hudson.model.Descriptor;
 import hudson.model.Label;
 import hudson.slaves.Cloud;
@@ -36,12 +37,12 @@ public class Datacenter extends Cloud {
     private final String hostname;
     private final String username;
     private final String realm;
-    private final String password; //TODO: Use `Secret` to store the password.
+    private final Secret password;
     private final Boolean ignoreSSL;
     private transient Connector pveConnector;
 
     @DataBoundConstructor
-    public Datacenter(String hostname, String username, String realm, String password, Boolean ignoreSSL) {
+    public Datacenter(String hostname, String username, String realm, Secret password, Boolean ignoreSSL) {
         super("Datacenter(proxmox)");
         this.hostname = hostname;
         this.username = username;
@@ -71,7 +72,7 @@ public class Datacenter extends Cloud {
         return realm;
     }
 
-    public String getPassword() {
+    public Secret getPassword() {
         return password;
     }
 
@@ -167,13 +168,13 @@ public class Datacenter extends Cloud {
             return emptyStringValidation("Realm", value);
         }
 
-        public FormValidation doCheckPassword(@QueryParameter String value) {
-            return emptyStringValidation("Password", value);
+        public FormValidation doCheckPassword(@QueryParameter Secret value) {
+            return emptyStringValidation("Password", value.getPlainText());
         }
         
         public FormValidation doTestConnection (
                 @QueryParameter String hostname, @QueryParameter String username, @QueryParameter String realm,
-                @QueryParameter String password, @QueryParameter Boolean ignoreSSL) {
+                @QueryParameter Secret password, @QueryParameter Boolean ignoreSSL) {
             try {
                 if (hostname.isEmpty()) {
                     return fieldNotSpecifiedError("Hostname");
@@ -184,7 +185,7 @@ public class Datacenter extends Cloud {
                 if (realm.isEmpty()) {
                     return fieldNotSpecifiedError("Realm");
                 }
-                if (password.isEmpty()) {
+                if (password.getPlainText().isEmpty()) {
                     return fieldNotSpecifiedError("Password");
                 }
 
