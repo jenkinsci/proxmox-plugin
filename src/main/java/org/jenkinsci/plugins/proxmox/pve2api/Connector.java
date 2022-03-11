@@ -1,15 +1,11 @@
 package org.jenkinsci.plugins.proxmox.pve2api;
 
-import static us.monoid.web.Resty.form;
-
-import java.io.IOException;
-import java.security.KeyManagementException;
-import java.security.NoSuchAlgorithmException;
-import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.logging.Logger;
+import java.util.logging.Level;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
@@ -22,11 +18,13 @@ import javax.security.auth.login.LoginException;
 import java.net.URI;
 import java.net.URISyntaxException;
 
-import us.monoid.json.JSONArray;
-import us.monoid.json.JSONException;
-import us.monoid.json.JSONObject;
-import us.monoid.web.JSONResource;
-import us.monoid.web.Resty;
+import kong.unirest.Unirest;
+import kong.unirest.UnirestInstance;
+import kong.unirest.HttpRequest;
+import kong.unirest.HttpResponse;
+import kong.unirest.JsonNode;
+import kong.unirest.json.JSONObject;
+import kong.unirest.json.JSONArray;
 
 import hudson.util.Secret;
 
@@ -43,47 +41,9 @@ public class Connector {
     private String authTicket;
     private Date authTicketIssuedTimestamp;
     private String csrfPreventionToken;
-
-    private static SSLSocketFactory cachedSSLSocketFactory = null;
-    private static HostnameVerifier cachedHostnameVerifier = null;
-
-    private static void ignoreAllCerts() {
-        if (cachedSSLSocketFactory == null)
-            cachedSSLSocketFactory = HttpsURLConnection.getDefaultSSLSocketFactory();
-        if (cachedHostnameVerifier == null)
-            cachedHostnameVerifier  = HttpsURLConnection.getDefaultHostnameVerifier();
-
-        TrustManager trm = new X509TrustManager() {
-            public void checkClientTrusted(X509Certificate[] certs, String authType) {}
-            public void checkServerTrusted(X509Certificate[] certs, String authType) {}
-            public X509Certificate[] getAcceptedIssuers() {    return null; }
-        };
-
-        HostnameVerifier hnv = new HostnameVerifier() {
-            public boolean verify(String s, SSLSession sslSession) {
-                return true;
-            }
-        };
-
-        SSLContext sc;
-        try {
-            sc = SSLContext.getInstance("SSL");
-            sc.init(null, new TrustManager[] { trm }, null);
-            HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
-            HttpsURLConnection.setDefaultHostnameVerifier(hnv);
-        } catch (KeyManagementException e) {
-            e.printStackTrace();
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public static void resetCachedSSLHelperObjects() {
-        if (cachedSSLSocketFactory != null)
-            HttpsURLConnection.setDefaultSSLSocketFactory(cachedSSLSocketFactory);
-        if (cachedHostnameVerifier != null)
-            HttpsURLConnection.setDefaultHostnameVerifier(cachedHostnameVerifier);
-    }
+	private UnirestInstance unirest;
+	
+	private static final Logger LOGGER = Logger.getLogger(Connector.class.getName());
 
     public Connector(String hostname, String username, String realm, Secret password) {
         this(hostname, username, realm, password, false);
@@ -104,69 +64,79 @@ public class Connector {
         this.username = username;
         this.realm = realm;
         this.password = password;
-
-        if (ignoreSSL)
-            ignoreAllCerts();
-        else
-            resetCachedSSLHelperObjects();
+		
+		this.unirest = Unirest.spawnInstance();
+		unirest.config().verifySsl(!ignoreSSL).reset();
         
         this.authTicketIssuedTimestamp = null;
         this.baseURL = "https://" + hostname + ":" + port.toString() + "/api2/json/";
     }
 
-    public void login() throws IOException, LoginException {
-        Resty r = new Resty();
-        JSONResource authTickets = r.json(baseURL + "access/ticket",
-                form("username=" + username + "@" + realm + "&password=" + password.getPlainText()));
+    public void login() throws LoginException {
+        JSONObject authTickets = unirest.post(baseURL + "access/ticket")
+			.field("username", username + "@" + realm)
+			.field("password", password.getPlainText())
+			.asJson()
+			.getBody()
+			.getObject();
         try {
-            authTicket = authTickets.get("data.ticket").toString();
-            csrfPreventionToken = authTickets.get("data.CSRFPreventionToken").toString();
+			JSONObject data = authTickets.getJSONObject("data");
+            authTicket = data.get("ticket").toString();
+            csrfPreventionToken = data.get("CSRFPreventionToken").toString();
             authTicketIssuedTimestamp = new Date();
         } catch (Exception e) {
+			LOGGER.log(Level.SEVERE, "Failed reading JSON response", e);
             throw new LoginException("Failed reading JSON response");
         }
     }
 
-    public void checkIfAuthTicketIsValid() throws IOException, LoginException {
+    public void checkIfAuthTicketIsValid() throws LoginException {
         //Authentication ticket has a lifetime of 2 hours, so login again when it expires
         if (authTicketIssuedTimestamp == null
                 || authTicketIssuedTimestamp.getTime() <= (new Date().getTime() - (120 * 60 * 1000))) {
             login();
         }
     }
+	
+	private HttpResponse<JsonNode> JSONResource(HttpRequest req) throws LoginException {
+		checkIfAuthTicketIsValid();
+		return req.header("Cookie", "PVEAuthCookie=" + authTicket)
+        .header("CSRFPreventionToken", csrfPreventionToken)
+		.asJson();
+	}
 
-    private Resty authedClient() throws IOException, LoginException {
-        checkIfAuthTicketIsValid();
-        Resty r = new Resty();
-        r.withHeader("Cookie", "PVEAuthCookie=" + authTicket);
-        r.withHeader("CSRFPreventionToken", csrfPreventionToken);
-        return r;
+    private JsonNode getJSONResource(String apiUrl) throws LoginException {
+        return JSONResource(unirest.get(baseURL + apiUrl))
+		.getBody();
+    }
+	
+	private JsonNode postJSONResource(String apiUrl, String body) throws LoginException {
+        return JSONResource(unirest.post(baseURL + apiUrl)
+			.header("Content-Type", "application/x-www-form-urlencoded")
+			.body(body))
+		.getBody();
     }
 
-    private JSONResource getJSONResource(String resource) throws IOException, LoginException {
-        return authedClient().json(baseURL + resource);
-    }
-
-    public List<String> getNodes() throws IOException, LoginException, JSONException {
+    public List<String> getNodes() throws LoginException {
         List<String> res = new ArrayList<String>();
-        JSONArray nodes = getJSONResource("nodes").toObject().getJSONArray("data");
+        JSONArray nodes = getJSONResource("nodes").getObject().getJSONArray("data");
         for (int i = 0; i < nodes.length(); i++) {
             res.add(nodes.getJSONObject(i).getString("node"));
         }
         return res;
     }
 
-    public JSONObject getTaskStatus(String node, String taskId) throws IOException, LoginException, JSONException {
-        JSONResource response = getJSONResource("nodes/" + node + "/tasks/" + taskId + "/status");
-        return response.toObject().getJSONObject("data");
+    public JSONObject getTaskStatus(String node, String taskId) throws LoginException {
+        JsonNode response = getJSONResource("nodes/" + node + "/tasks/" + taskId + "/status");
+        return response.getObject().getJSONObject("data");
     }
     
-    public JSONObject getQemuMachineStatus(String node, Integer vmid) throws IOException, LoginException, JSONException {
-      JSONResource response = getJSONResource("nodes/" + node + "/qemu/" + vmid + "/status/current");
-      return response.toObject().getJSONObject("data");
+    public JSONObject getQemuMachineStatus(String node, Integer vmid) throws LoginException {
+      JsonNode response = getJSONResource("nodes/" + node + "/qemu/" + vmid + "/status/current");
+      return response.getObject().getJSONObject("data");
     }
     
-    public Boolean isQemuMachineRunning(String node, Integer vmid) throws IOException, LoginException, JSONException {
+    public Boolean isQemuMachineRunning(String node, Integer vmid) throws LoginException {
       JSONObject QemuMachineStatus = null;
       Boolean isRunning = true;
       QemuMachineStatus = getQemuMachineStatus(node, vmid);
@@ -174,7 +144,7 @@ public class Connector {
       return isRunning;
   }
 
-    public JSONObject waitForTaskToFinish(String node, String taskId) throws IOException, LoginException, JSONException, InterruptedException {
+    public JSONObject waitForTaskToFinish(String node, String taskId) throws LoginException, InterruptedException {
         JSONObject lastTaskStatus = null;
         Boolean isRunning = true;
         while (isRunning) {
@@ -187,9 +157,9 @@ public class Connector {
         return lastTaskStatus;
     }
 
-    public HashMap<String, Integer> getQemuMachines(String node) throws IOException, LoginException, JSONException {
+    public HashMap<String, Integer> getQemuMachines(String node) throws LoginException {
         HashMap<String, Integer> res = new HashMap<String, Integer>();
-        JSONArray qemuVMs = getJSONResource("nodes/" + node + "/qemu").toObject().getJSONArray("data");
+        JSONArray qemuVMs = getJSONResource("nodes/" + node + "/qemu").getObject().getJSONArray("data");
         for (int i = 0; i < qemuVMs.length(); i++) {
             JSONObject vm = qemuVMs.getJSONObject(i);
             res.put(vm.getString("name"), vm.getInt("vmid"));
@@ -197,44 +167,42 @@ public class Connector {
         return res;
     }
 
-    public List<String> getQemuMachineSnapshots(String node, Integer vmid)
-            throws IOException, LoginException, JSONException {
+    public List<String> getQemuMachineSnapshots(String node, Integer vmid) throws LoginException {
         List<String> res = new ArrayList<String>();
         JSONArray snapshots = getJSONResource("nodes/" + node + "/qemu/" + vmid.toString() + "/snapshot")
-                .toObject().getJSONArray("data");
+                .getObject().getJSONArray("data");
         for (int i = 0; i < snapshots.length(); i++) {
             res.add(snapshots.getJSONObject(i).getString("name"));
         }
         return res;
     }
 
-    public String rollbackQemuMachineSnapshot(String node, Integer vmid, String snapshotName)
-            throws IOException, LoginException, JSONException {
-        Resty r = authedClient();
-        String resource = "nodes/" + node + "/qemu/" + vmid.toString() + "/snapshot/" + snapshotName + "/rollback";
-        JSONResource response = r.json(baseURL + resource, form(""));
-        return response.toObject().getString("data");
+    public String rollbackQemuMachineSnapshot(String node, Integer vmid, String snapshotName) throws LoginException {
+        return postJSONResource("nodes/" + node + "/qemu/" + vmid.toString() + "/snapshot/" + snapshotName + "/rollback", "")
+			.getObject()
+			.getString("data");
     }
 
-    public String startQemuMachine(String node, Integer vmid) throws IOException, LoginException, JSONException {
-        Resty r = authedClient();
-        String resource = "nodes/" + node + "/qemu/" + vmid.toString() + "/status/start";
-        JSONResource response = r.json(baseURL + resource, form(""));
-        return response.toObject().getString("data");
+    public String startQemuMachine(String node, Integer vmid) throws LoginException {
+        return postJSONResource("nodes/" + node + "/qemu/" + vmid.toString() + "/status/start", "")
+			.getObject()
+			.getString("data");
     }
 
-    public String stopQemuMachine(String node, Integer vmid) throws IOException, LoginException, JSONException {
-        Resty r = authedClient();
-        String resource = "nodes/" + node + "/qemu/" + vmid.toString() + "/status/stop";
-        JSONResource response = r.json(baseURL + resource, form(""));
-        return response.toObject().getString("data");
+    public String stopQemuMachine(String node, Integer vmid) throws LoginException {
+        return postJSONResource("nodes/" + node + "/qemu/" + vmid.toString() + "/status/stop", "")
+			.getObject()
+			.getString("data");
     }
     
-    public String shutdownQemuMachine(String node, Integer vmid) throws IOException, LoginException, JSONException {
-      Resty r = authedClient();
-      String resource = "nodes/" + node + "/qemu/" + vmid.toString() + "/status/shutdown";
-      JSONResource response = r.json(baseURL + resource, form(""));
-      return response.toObject().getString("data");
-  }
+    public String shutdownQemuMachine(String node, Integer vmid) throws LoginException {
+		return postJSONResource("nodes/" + node + "/qemu/" + vmid.toString() + "/status/shutdown", "")
+			.getObject()
+			.getString("data");
+    }
+	
+	 protected void finalize() {
+		 unirest.shutDown();
+	 }
 
 }

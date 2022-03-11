@@ -1,6 +1,5 @@
 package org.jenkinsci.plugins.proxmox;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -25,7 +24,7 @@ import hudson.slaves.Cloud;
 import hudson.slaves.NodeProvisioner;
 import hudson.util.FormValidation;
 import net.sf.json.JSONObject;
-import us.monoid.json.JSONException;
+import jenkins.model.Jenkins;
 
 /**
  * Represents a Proxmox datacenter.
@@ -100,37 +99,33 @@ public class Datacenter extends Cloud {
         Connector pveConnector = proxmoxInstance();
         try {
             return pveConnector.getNodes();
-        } catch (JSONException e) {
-            return new ArrayList<String>(); //TODO: Properly log Proxmox exceptions
         } catch (LoginException e) {
-            return new ArrayList<String>();
-        } catch (IOException e) {
             return new ArrayList<String>();
         }
     }
 
     public HashMap<String, Integer> getQemuMachines(String node) {
+		if (node == null || node.isEmpty()) {
+			return new HashMap<String, Integer>();
+		}
+		
         Connector pveConnector = proxmoxInstance();
         try {
             return pveConnector.getQemuMachines(node);
-        } catch (JSONException e) {
-            return new HashMap<String, Integer>();
         } catch (LoginException e) {
             return new HashMap<String, Integer>();
-        } catch (IOException e) {
-            return new HashMap<String, Integer>();
         }
-    }
+	}
 
     public List<String> getQemuMachineSnapshots(String node, Integer vmid) {
+		if (node == null || node.isEmpty() || vmid < 1) {
+			return new ArrayList<String>();
+		}
+		
         Connector pveConnector = proxmoxInstance();
         try {
             return pveConnector.getQemuMachineSnapshots(node, vmid);
-        } catch (JSONException e) {
-            return new ArrayList<String>();
         } catch (LoginException e) {
-            return new ArrayList<String>();
-        } catch (IOException e) {
             return new ArrayList<String>();
         }
     }
@@ -175,6 +170,7 @@ public class Datacenter extends Cloud {
         public FormValidation doTestConnection (
                 @QueryParameter String hostname, @QueryParameter String username, @QueryParameter String realm,
                 @QueryParameter Secret password, @QueryParameter Boolean ignoreSSL) {
+			Jenkins.get().checkPermission(Jenkins.ADMINISTER);
             try {
                 if (hostname.isEmpty()) {
                     return fieldNotSpecifiedError("Hostname");
@@ -194,10 +190,8 @@ public class Datacenter extends Cloud {
                 return FormValidation.ok("Login successful");
 
             } catch (LoginException e) {
-                return FormValidation.error("Invalid login credentials");
-            } catch (IOException e) {
-                LOGGER.log(Level.SEVERE, "Error: " + e.getMessage());
-                return FormValidation.error("Error: " + e.getMessage());
+				LOGGER.log(Level.SEVERE, "Authentication error", e);
+                return FormValidation.error("Authentication error. Please verify your login credentials or check logs.");
             }
         }
 

@@ -18,8 +18,7 @@ import hudson.slaves.DelegatingComputerLauncher;
 import hudson.slaves.JNLPLauncher;
 import hudson.slaves.SlaveComputer;
 import jenkins.model.Jenkins;
-import us.monoid.json.JSONException;
-import us.monoid.json.JSONObject;
+import kong.unirest.json.JSONObject;
 
 /**
  * Controls launching of Proxmox virtual machines.
@@ -118,7 +117,7 @@ public class VirtualMachineLauncher extends DelegatingComputerLauncher {
         return overrideLaunchSupported;
     }
 
-    public void startSlaveIfNeeded(TaskListener taskListener) throws IOException, InterruptedException {
+    public void startSlaveIfNeeded(TaskListener taskListener) throws InterruptedException {
         String taskId = null;
         JSONObject taskStatus = null;
         try {
@@ -131,10 +130,6 @@ public class VirtualMachineLauncher extends DelegatingComputerLauncher {
                 taskStatus = pve.waitForTaskToFinish(datacenterNode, taskId);
                 taskListener.getLogger().println("Task finished! Status object: " + taskStatus.toString());
             }
-        } catch (IOException e) {
-            taskListener.getLogger().println("ERROR: IOException: " + e.getMessage());
-        } catch (JSONException e) {
-            taskListener.getLogger().println("ERROR: Parsing JSON: " + e.getMessage());
         } catch (LoginException e) {
             taskListener.getLogger().println("ERROR: Login failed: " + e.getMessage());
         }
@@ -164,10 +159,6 @@ public class VirtualMachineLauncher extends DelegatingComputerLauncher {
                 startSlaveIfNeeded(taskListener);
             }
   
-        } catch (IOException e) {
-            taskListener.getLogger().println("ERROR: IOException: " + e.getMessage());
-        } catch (JSONException e) {
-            taskListener.getLogger().println("ERROR: Parsing JSON: " + e.getMessage());
         } catch (LoginException e) {
             taskListener.getLogger().println("ERROR: Login failed: " + e.getMessage());
         }
@@ -211,10 +202,6 @@ public class VirtualMachineLauncher extends DelegatingComputerLauncher {
               taskStatus = pve.waitForTaskToFinish(datacenterNode, taskId);
             }
             taskListener.getLogger().println("Task finished! Status object: " + taskStatus.toString());
-        } catch (IOException e) {
-            LOGGER.log(Level.SEVERE, "Exception: " + e.getMessage());
-        } catch (JSONException e) {
-            LOGGER.log(Level.SEVERE, "Parsing JSON: " + e.getMessage());
         } catch (InterruptedException e) {
             LOGGER.log(Level.SEVERE, "Waiting for task completion failed: " + e.getMessage());
         } catch (LoginException e) {

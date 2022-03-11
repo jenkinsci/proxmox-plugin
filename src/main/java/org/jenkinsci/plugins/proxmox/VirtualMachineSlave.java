@@ -28,7 +28,6 @@ import hudson.slaves.RetentionStrategy;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import jenkins.model.Jenkins;
-import us.monoid.json.JSONException;
 
 public class VirtualMachineSlave extends Slave {
 
@@ -49,8 +48,8 @@ public class VirtualMachineSlave extends Slave {
                                String datacenterDescription, String datacenterNode, Integer virtualMachineId,
                                String snapshotName, Boolean startVM, int startupWaitingPeriodSeconds,
                                RevertPolicy revertPolicy)
-            throws
-            Descriptor.FormException, IOException {
+            throws IOException,
+            Descriptor.FormException {
         super(name, nodeDescription, remoteFS, numExecutors, mode, labelString,
                 new VirtualMachineLauncher(delegateLauncher, datacenterDescription, datacenterNode, virtualMachineId,
                         snapshotName, startVM, startupWaitingPeriodSeconds, revertPolicy),
@@ -211,12 +210,8 @@ public class VirtualMachineSlave extends Slave {
             try {
                 String taskStatus = pveApi.rollbackQemuMachineSnapshot(datacenterNode, virtualMachineId, snapshotName);
                 return FormValidation.ok("Returned: " + taskStatus);
-            } catch (IOException e) {
-                return FormValidation.error("IO: " + e.getMessage());
             } catch (LoginException e) {
                 return FormValidation.error("Login Failed: " + e.getMessage());
-            } catch (JSONException e) {
-                return FormValidation.error("JSON: " + e.getMessage());
             }
         }
 
