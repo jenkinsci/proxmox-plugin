@@ -25,6 +25,7 @@ import hudson.slaves.NodeProvisioner;
 import hudson.util.FormValidation;
 import net.sf.json.JSONObject;
 import jenkins.model.Jenkins;
+import org.kohsuke.stapler.verb.POST;
 
 /**
  * Represents a Proxmox datacenter.
@@ -167,6 +168,7 @@ public class Datacenter extends Cloud {
             return emptyStringValidation("Password", value.getPlainText());
         }
         
+		@POST
         public FormValidation doTestConnection (
                 @QueryParameter String hostname, @QueryParameter String username, @QueryParameter String realm,
                 @QueryParameter Secret password, @QueryParameter Boolean ignoreSSL) {

@@ -28,6 +28,7 @@ import hudson.slaves.RetentionStrategy;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import jenkins.model.Jenkins;
+import org.kohsuke.stapler.verb.POST;
 
 public class VirtualMachineSlave extends Slave {
 
@@ -139,7 +140,8 @@ public class VirtualMachineSlave extends Slave {
         }
 
         public ListBoxModel doFillDatacenterNodeItems(@QueryParameter("datacenterDescription") String datacenterDescription) {
-            ListBoxModel items = new ListBoxModel();
+            Jenkins.get().checkPermission(Jenkins.ADMINISTER);
+			ListBoxModel items = new ListBoxModel();
             items.add("[Select]", "");
             Datacenter datacenter = getDatacenterByDescription(datacenterDescription);
             if (datacenter != null) {
@@ -151,7 +153,8 @@ public class VirtualMachineSlave extends Slave {
         }
 
         public ListBoxModel doFillVirtualMachineIdItems(@QueryParameter("datacenterDescription") String datacenterDescription, @QueryParameter("datacenterNode") String datacenterNode) {
-            ListBoxModel items = new ListBoxModel();
+            Jenkins.get().checkPermission(Jenkins.ADMINISTER);
+			ListBoxModel items = new ListBoxModel();
             items.add("[Select]", "");
             Datacenter datacenter = getDatacenterByDescription(datacenterDescription);
             if (datacenter != null) {
@@ -165,6 +168,7 @@ public class VirtualMachineSlave extends Slave {
 
         public ListBoxModel doFillSnapshotNameItems(@QueryParameter("datacenterDescription") String datacenterDescription, @QueryParameter("datacenterNode") String datacenterNode,
                                                  @QueryParameter("virtualMachineId") String virtualMachineId) {
+			Jenkins.get().checkPermission(Jenkins.ADMINISTER);
             ListBoxModel items = new ListBoxModel();
             items.add("[Select]", "");
             Datacenter datacenter = getDatacenterByDescription(datacenterDescription);
@@ -200,9 +204,11 @@ public class VirtualMachineSlave extends Slave {
             return revertPolicy;
         }
         
+		@POST
         public FormValidation doTestRollback (
                 @QueryParameter String datacenterDescription, @QueryParameter String datacenterNode,
                 @QueryParameter Integer virtualMachineId, @QueryParameter String snapshotName) {
+			Jenkins.get().checkPermission(Jenkins.ADMINISTER);
             Datacenter datacenter = getDatacenterByDescription(datacenterDescription);
             if (datacenter == null)
                 return FormValidation.error("Datacenter not found!");
