@@ -32,12 +32,12 @@ public class VirtualMachineLauncher extends DelegatingComputerLauncher {
     @Deprecated
     private transient int WAIT_TIME_MS;
 
-    private String datacenterDescription;
-    private String datacenterNode;
-    private Integer virtualMachineId;
-    private String snapshotName;
-    private Boolean startVM;
-    private int waitingTimeSecs;
+    private transient String datacenterDescription;
+    private transient String datacenterNode;
+    private transient Integer virtualMachineId;
+    private transient String snapshotName;
+    private transient Boolean startVM;
+    private transient int waitingTimeSecs;
 
     public static enum RevertPolicy {
 
@@ -54,9 +54,9 @@ public class VirtualMachineLauncher extends DelegatingComputerLauncher {
             return label;
         }
     }
-    
+
     private final RevertPolicy revertPolicy;
-    
+
     @DataBoundConstructor
     public VirtualMachineLauncher(ComputerLauncher launcher, String datacenterDescription, String datacenterNode,
                                   Integer virtualMachineId, String snapshotName, Boolean startVM, int waitingTimeSecs,
@@ -139,36 +139,36 @@ public class VirtualMachineLauncher extends DelegatingComputerLauncher {
         String taskId = null;
         JSONObject taskStatus = null;
 
-        try {            
+        try {
             Datacenter datacenter = findDatacenterInstance();
             Connector pve = datacenter.proxmoxInstance();
-            
+
             if (!snapshotName.equals("current")) {
               taskListener.getLogger().println("Virtual machine \"" + virtualMachineId
                   + "\" (Name \"" + slaveComputer.getDisplayName() + "\") is being reverted...");
               //TODO: Check the status of this task (pass/fail) not just that its finished
               taskId = pve.rollbackQemuMachineSnapshot(datacenterNode, virtualMachineId, snapshotName);
               taskListener.getLogger().println("Proxmox returned: " + taskId);
-  
+
               //Wait for the task to finish
               taskStatus = pve.waitForTaskToFinish(datacenterNode, taskId);
               taskListener.getLogger().println("Task finished! Status object: " + taskStatus.toString());
             }
-  
+
             if (startVM) {
                 startSlaveIfNeeded(taskListener);
             }
-  
+
         } catch (LoginException e) {
             taskListener.getLogger().println("ERROR: Login failed: " + e.getMessage());
         }
-  
+
         //Ignore the wait period for a JNLP agent as it connects back to the Jenkins instance.
         if (!(launcher instanceof JNLPLauncher)) {
             Thread.sleep(waitingTimeSecs * 1000);
         }
     }
-    
+
     @Override
     public void launch(SlaveComputer slaveComputer, TaskListener taskListener) throws IOException, InterruptedException {
         if (revertPolicy == RevertPolicy.AFTER_CONNECT) {
@@ -185,7 +185,7 @@ public class VirtualMachineLauncher extends DelegatingComputerLauncher {
     public void shutdown(SlaveComputer slaveComputer, TaskListener taskListener) {
         String taskId = null;
         JSONObject taskStatus = null;
-        
+
         //try to gracefully shutdown the virtual machine
         try {
             taskListener.getLogger().println("Virtual machine \"" + virtualMachineId
@@ -213,7 +213,7 @@ public class VirtualMachineLauncher extends DelegatingComputerLauncher {
     public void beforeDisconnect(SlaveComputer slaveComputer, TaskListener taskListener) {
     	if(revertPolicy == RevertPolicy.AFTER_CONNECT)
     		shutdown(slaveComputer, taskListener);
-    	
+
     	super.beforeDisconnect(slaveComputer, taskListener);
     }
 
