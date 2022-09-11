@@ -10,7 +10,7 @@ Use Proxmox virtual machines as slaves in Jenkins
 
 ## Description
 
-This plugin allows the use of Proxmox virtual machines as slaves in Jenkins.
+This plugin allows the use of Proxmox virtual machines as agents in Jenkins.
 
 ## Limitations
 
