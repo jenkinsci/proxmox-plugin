@@ -1,4 +1,4 @@
 <?jelly escape-by-default='true'?>
 <div>
-  Enables proxmox machines to be used as slaves. Supports reverting from a snapshot
+  Enables proxmox machines to be used as agents. Supports reverting from a snapshot
 </div>

@@ -118,7 +118,7 @@ public class VirtualMachineSlave extends Slave {
         }
 
         public String getDisplayName() {
-            return "Slave virtual machine running on a Proxmox datacenter.";
+            return "Agent virtual machine running on a Proxmox datacenter.";
         }
 
         @Override
