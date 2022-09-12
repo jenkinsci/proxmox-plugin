@@ -46,13 +46,13 @@ public class VirtualMachineSlaveComputer extends SlaveComputer {
 
                 	final Future<?> disconnectFuture = disconnect(OfflineCause.create(Messages._VirtualMachineSlaveComputer_disconnectBeforeSnapshotRevert()));
                 	disconnectFuture.get();
-                	getListener().getLogger().println("INFO: slave disconnected");
+                	getListener().getLogger().println("INFO: agent disconnected");
 
                 	launcher.revertSnapshot(this, getListener());
                 	getListener().getLogger().println("INFO: snapshot reverted");
 
                 	launcher.launch(this, getListener());
-                	getListener().getLogger().println("INFO: slave launched");
+                	getListener().getLogger().println("INFO: agent launched");
                 } catch (IOException | InterruptedException e) {
                 	getListener().getLogger().println("ERROR: Snapshot revert failed: " + e.getMessage());
                 } catch (ExecutionException e) {

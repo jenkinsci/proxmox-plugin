@@ -1,6 +1,6 @@
 # Jenkins Proxmox Plugin
 
-Use Proxmox virtual machines as slaves in Jenkins
+Use Proxmox virtual machines as agents in Jenkins
 
 [![Proxmox Plugin](https://img.shields.io/jenkins/plugin/v/proxmox.svg)](https://plugins.jenkins.io/proxmox)
 [![ChangeLog](https://img.shields.io/github/release/jenkinsci/proxmox-plugin.svg?label=changelog)](https://github.com/jenkinsci/proxmox-plugin/releases/latest)
@@ -10,12 +10,12 @@ Use Proxmox virtual machines as slaves in Jenkins
 
 ## Description
 
-This plugin allows the use of Proxmox virtual machines as slaves in Jenkins.
+This plugin allows the use of Proxmox virtual machines as agents in Jenkins.
 
 ## Limitations
 
 -   Only Qemu virtual machines supported (at the moment).
--   No option to avoid rolling back to a snapshot on slave start up.
+-   No option to avoid rolling back to a snapshot on agent start up.
 -   No checking on virtual machine ready state/errors during rollback.
 
 ## Configuration
@@ -26,10 +26,10 @@ To add a new Proxmox datacenter cloud, click on "Manage Jenkins" then
 "Configure System". In the "Cloud" section click "Add cloud" and select
 "Datacenter".
 
-#### Virtual machine slaves
+#### Virtual machine agents
 
-To add slaves click on "Manage Jenkins" then "Manage Nodes". Select the
-node type "Slave virtual machine running on a Proxmox datacenter." and
+To add agents click on "Manage Jenkins" then "Manage Nodes". Select the
+node type "Agent virtual machine running on a Proxmox datacenter." and
 enter a name for the node.
 
 ## Manually Installing
