@@ -7,13 +7,6 @@ import java.util.List;
 import java.util.logging.Logger;
 import java.util.logging.Level;
 
-import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.HttpsURLConnection;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSession;
-import javax.net.ssl.SSLSocketFactory;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
 import javax.security.auth.login.LoginException;
 import java.net.URI;
 import java.net.URISyntaxException;

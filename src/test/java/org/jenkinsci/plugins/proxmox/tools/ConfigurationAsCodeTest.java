@@ -2,18 +2,15 @@ package org.jenkinsci.plugins.proxmox.tools;
 
 import hudson.model.Computer;
 import hudson.model.Node.Mode;
-import hudson.slaves.ComputerLauncher;
 import hudson.slaves.JNLPLauncher;
 import hudson.slaves.RetentionStrategy;
 import io.jenkins.plugins.casc.ConfigurationContext;
 import io.jenkins.plugins.casc.ConfiguratorRegistry;
 import io.jenkins.plugins.casc.misc.ConfiguredWithCode;
 import io.jenkins.plugins.casc.misc.JenkinsConfiguredWithCodeRule;
-import io.jenkins.plugins.casc.model.CNode;
 import io.jenkins.plugins.casc.model.Mapping;
 import hudson.util.Secret;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -25,12 +22,10 @@ import org.junit.ClassRule;
 import org.junit.Test;
 
 import static io.jenkins.plugins.casc.misc.Util.getJenkinsRoot;
-import static io.jenkins.plugins.casc.misc.Util.toStringFromYamlFile;
 import static io.jenkins.plugins.casc.misc.Util.toYamlString;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.instanceOf;
-import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.core.Is.is;
 import static org.jvnet.hudson.test.JenkinsMatchers.hasPlainText;
 import static java.util.Objects.requireNonNull;
