@@ -34,18 +34,6 @@
         <name>Dynamo-Media</name>
         <url>https://www.dynamo-media.com</url>
     </organization>
-    <developers>
-        <developer>
-            <id>justnom</id>
-            <name>Harry Macey</name>
-            <email>harry.macey@gmail.com</email>
-        </developer>
-        <developer>
-            <id>maxhy</id>
-            <name>Maxime C.</name>
-            <email>maxime@islog.com</email>
-        </developer>
-    </developers>
 
     <scm>
         <connection>scm:git:https://github.com/jenkinsci/proxmox-plugin.git</connection>
