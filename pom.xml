@@ -3,7 +3,7 @@
     <parent>
         <groupId>org.jenkins-ci.plugins</groupId>
         <artifactId>plugin</artifactId>
-        <version>4.51</version>
+        <version>4.88</version>
         <relativePath />
     </parent>
 
@@ -14,7 +14,7 @@
     
     <properties>
         <!-- https://www.jenkins.io/doc/developer/plugin-development/choosing-jenkins-baseline/ -->
-        <jenkins.baseline>2.346</jenkins.baseline>
+        <jenkins.baseline>2.462</jenkins.baseline>
         <jenkins.version>${jenkins.baseline}.3</jenkins.version>
         <slf4jVersion>1.7.26</slf4jVersion>
     </properties>
@@ -34,18 +34,6 @@
         <name>Dynamo-Media</name>
         <url>https://www.dynamo-media.com</url>
     </organization>
-    <developers>
-        <developer>
-            <id>justnom</id>
-            <name>Harry Macey</name>
-            <email>harry.macey@gmail.com</email>
-        </developer>
-        <developer>
-            <id>maxhy</id>
-            <name>Maxime C.</name>
-            <email>maxime@islog.com</email>
-        </developer>
-    </developers>
 
     <scm>
         <connection>scm:git:https://github.com/jenkinsci/proxmox-plugin.git</connection>
@@ -97,7 +85,7 @@
             <dependency>
                 <groupId>io.jenkins.tools.bom</groupId>
                 <artifactId>bom-${jenkins.baseline}.x</artifactId>
-                <version>1763.v092b_8980a_f5e</version>
+                <version>4228.v0a_71308d905b_</version>
                 <scope>import</scope>
                 <type>pom</type>
             </dependency>
