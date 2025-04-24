@@ -1,5 +1,13 @@
 package org.jenkinsci.plugins.proxmox;
 
+import hudson.Extension;
+import hudson.Util;
+import hudson.model.Descriptor;
+import hudson.model.Label;
+import hudson.slaves.Cloud;
+import hudson.slaves.NodeProvisioner;
+import hudson.util.FormValidation;
+import hudson.util.Secret;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -7,24 +15,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
 import javax.security.auth.login.LoginException;
-
+import jenkins.model.Jenkins;
+import net.sf.json.JSONObject;
 import org.jenkinsci.plugins.proxmox.pve2api.Connector;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest2;
-
-import hudson.Extension;
-import hudson.Util;
-import hudson.util.Secret;
-import hudson.model.Descriptor;
-import hudson.model.Label;
-import hudson.slaves.Cloud;
-import hudson.slaves.NodeProvisioner;
-import hudson.util.FormValidation;
-import net.sf.json.JSONObject;
-import jenkins.model.Jenkins;
 import org.kohsuke.stapler.verb.POST;
 
 /**
@@ -106,23 +103,23 @@ public class Datacenter extends Cloud {
     }
 
     public HashMap<String, Integer> getQemuMachines(String node) {
-		if (node == null || node.isEmpty()) {
-			return new HashMap<String, Integer>();
-		}
-		
+        if (node == null || node.isEmpty()) {
+            return new HashMap<String, Integer>();
+        }
+
         Connector pveConnector = proxmoxInstance();
         try {
             return pveConnector.getQemuMachines(node);
         } catch (LoginException e) {
             return new HashMap<String, Integer>();
         }
-	}
+    }
 
     public List<String> getQemuMachineSnapshots(String node, Integer vmid) {
-		if (node == null || node.isEmpty() || vmid < 1) {
-			return new ArrayList<String>();
-		}
-		
+        if (node == null || node.isEmpty() || vmid < 1) {
+            return new ArrayList<String>();
+        }
+
         Connector pveConnector = proxmoxInstance();
         try {
             return pveConnector.getQemuMachineSnapshots(node, vmid);
@@ -167,12 +164,15 @@ public class Datacenter extends Cloud {
         public FormValidation doCheckPassword(@QueryParameter Secret value) {
             return emptyStringValidation("Password", value.getPlainText());
         }
-        
-		@POST
-        public FormValidation doTestConnection (
-                @QueryParameter String hostname, @QueryParameter String username, @QueryParameter String realm,
-                @QueryParameter Secret password, @QueryParameter Boolean ignoreSSL) {
-			Jenkins.get().checkPermission(Jenkins.ADMINISTER);
+
+        @POST
+        public FormValidation doTestConnection(
+                @QueryParameter String hostname,
+                @QueryParameter String username,
+                @QueryParameter String realm,
+                @QueryParameter Secret password,
+                @QueryParameter Boolean ignoreSSL) {
+            Jenkins.get().checkPermission(Jenkins.ADMINISTER);
             try {
                 if (hostname.isEmpty()) {
                     return fieldNotSpecifiedError("Hostname");
@@ -188,15 +188,14 @@ public class Datacenter extends Cloud {
                 }
 
                 Connector pveConnector = new Connector(hostname, username, realm, password, ignoreSSL);
-                pveConnector.login();                                
+                pveConnector.login();
                 return FormValidation.ok("Login successful");
 
             } catch (LoginException e) {
-				LOGGER.log(Level.SEVERE, "Authentication error", e);
-                return FormValidation.error("Authentication error. Please verify your login credentials or check logs.");
+                LOGGER.log(Level.SEVERE, "Authentication error", e);
+                return FormValidation.error(
+                        "Authentication error. Please verify your login credentials or check logs.");
             }
         }
-
     }
-
 }
