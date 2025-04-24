@@ -13,7 +13,7 @@ import javax.security.auth.login.LoginException;
 import org.jenkinsci.plugins.proxmox.pve2api.Connector;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
-import org.kohsuke.stapler.StaplerRequest;
+import org.kohsuke.stapler.StaplerRequest2;
 
 import hudson.Extension;
 import hudson.Util;
@@ -138,7 +138,7 @@ public class Datacenter extends Cloud {
         }
 
         @Override
-        public boolean configure(StaplerRequest req, JSONObject o) throws FormException {
+        public boolean configure(StaplerRequest2 req, JSONObject o) throws FormException {
             save();
             return super.configure(req, o);
         }
