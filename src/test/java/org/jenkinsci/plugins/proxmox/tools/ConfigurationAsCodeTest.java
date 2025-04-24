@@ -1,34 +1,32 @@
 package org.jenkinsci.plugins.proxmox.tools;
 
-import hudson.model.Computer;
-import hudson.model.Node.Mode;
-import hudson.slaves.JNLPLauncher;
-import hudson.slaves.RetentionStrategy;
-import io.jenkins.plugins.casc.ConfigurationContext;
-import io.jenkins.plugins.casc.ConfiguratorRegistry;
-import io.jenkins.plugins.casc.misc.ConfiguredWithCode;
-import io.jenkins.plugins.casc.misc.JenkinsConfiguredWithCodeRule;
-import io.jenkins.plugins.casc.model.Mapping;
-import hudson.util.Secret;
-
-import java.util.Arrays;
-import java.util.List;
-
-import org.jenkinsci.plugins.proxmox.Datacenter;
-import org.jenkinsci.plugins.proxmox.VirtualMachineSlave;
-import org.jenkinsci.plugins.proxmox.VirtualMachineSlaveComputer;
-import org.jenkinsci.plugins.proxmox.VirtualMachineLauncher.RevertPolicy;
-import org.junit.ClassRule;
-import org.junit.Test;
-
 import static io.jenkins.plugins.casc.misc.Util.getJenkinsRoot;
 import static io.jenkins.plugins.casc.misc.Util.toYamlString;
+import static java.util.Objects.requireNonNull;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.core.Is.is;
 import static org.jvnet.hudson.test.JenkinsMatchers.hasPlainText;
-import static java.util.Objects.requireNonNull;
+
+import hudson.model.Computer;
+import hudson.model.Node.Mode;
+import hudson.slaves.JNLPLauncher;
+import hudson.slaves.RetentionStrategy;
+import hudson.util.Secret;
+import io.jenkins.plugins.casc.ConfigurationContext;
+import io.jenkins.plugins.casc.ConfiguratorRegistry;
+import io.jenkins.plugins.casc.misc.ConfiguredWithCode;
+import io.jenkins.plugins.casc.misc.JenkinsConfiguredWithCodeRule;
+import io.jenkins.plugins.casc.model.Mapping;
+import java.util.Arrays;
+import java.util.List;
+import org.jenkinsci.plugins.proxmox.Datacenter;
+import org.jenkinsci.plugins.proxmox.VirtualMachineLauncher.RevertPolicy;
+import org.jenkinsci.plugins.proxmox.VirtualMachineSlave;
+import org.jenkinsci.plugins.proxmox.VirtualMachineSlaveComputer;
+import org.junit.ClassRule;
+import org.junit.Test;
 
 public class ConfigurationAsCodeTest {
 
@@ -71,13 +69,16 @@ public class ConfigurationAsCodeTest {
     public void should_support_configuration_export() throws Exception {
         ConfiguratorRegistry registry = ConfiguratorRegistry.get();
         ConfigurationContext context = new ConfigurationContext(registry);
-        final Mapping cloud = getJenkinsRoot(context).get("clouds").asSequence().get(0).asMapping();
+        final Mapping cloud =
+                getJenkinsRoot(context).get("clouds").asSequence().get(0).asMapping();
 
         String exported = toYamlString(cloud);
-		Secret password = requireNonNull(Secret.decrypt(cloud.get("datacenter").asMapping().getScalarValue("password")));
+        Secret password = requireNonNull(
+                Secret.decrypt(cloud.get("datacenter").asMapping().getScalarValue("password")));
 
-        String expected = String.join("\n",
-				"datacenter:",
+        String expected = String.join(
+                "\n",
+                "datacenter:",
                 "  hostname: \"company-proxmox\"",
                 "  ignoreSSL: true",
                 "  password: \"" + password.getEncryptedValue() + "\"",
