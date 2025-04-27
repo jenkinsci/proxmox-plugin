@@ -1,15 +1,5 @@
 package org.jenkinsci.plugins.proxmox;
 
-import java.io.IOException;
-import java.io.ObjectStreamException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
-import javax.security.auth.login.LoginException;
-
-import org.jenkinsci.plugins.proxmox.pve2api.Connector;
-import org.kohsuke.stapler.DataBoundConstructor;
-
 import hudson.model.Descriptor;
 import hudson.model.TaskListener;
 import hudson.slaves.Cloud;
@@ -17,8 +7,15 @@ import hudson.slaves.ComputerLauncher;
 import hudson.slaves.DelegatingComputerLauncher;
 import hudson.slaves.JNLPLauncher;
 import hudson.slaves.SlaveComputer;
+import java.io.IOException;
+import java.io.ObjectStreamException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.security.auth.login.LoginException;
 import jenkins.model.Jenkins;
 import kong.unirest.json.JSONObject;
+import org.jenkinsci.plugins.proxmox.pve2api.Connector;
+import org.kohsuke.stapler.DataBoundConstructor;
 
 /**
  * Controls launching of Proxmox virtual machines.
@@ -29,6 +26,7 @@ public class VirtualMachineLauncher extends DelegatingComputerLauncher {
 
     @Deprecated
     private transient ComputerLauncher delegate;
+
     @Deprecated
     private transient int WAIT_TIME_MS;
 
@@ -40,11 +38,10 @@ public class VirtualMachineLauncher extends DelegatingComputerLauncher {
     private transient int waitingTimeSecs;
 
     public static enum RevertPolicy {
-
         AFTER_CONNECT("After connect to the virtual machine"),
         BEFORE_JOB("Before every job executing on the virtual machine");
 
-        final private String label;
+        private final String label;
 
         private RevertPolicy(String policy) {
             this.label = policy;
@@ -58,9 +55,15 @@ public class VirtualMachineLauncher extends DelegatingComputerLauncher {
     private final RevertPolicy revertPolicy;
 
     @DataBoundConstructor
-    public VirtualMachineLauncher(ComputerLauncher launcher, String datacenterDescription, String datacenterNode,
-                                  Integer virtualMachineId, String snapshotName, Boolean startVM, int waitingTimeSecs,
-                                  RevertPolicy revertPolicy) {
+    public VirtualMachineLauncher(
+            ComputerLauncher launcher,
+            String datacenterDescription,
+            String datacenterNode,
+            Integer virtualMachineId,
+            String snapshotName,
+            Boolean startVM,
+            int waitingTimeSecs,
+            RevertPolicy revertPolicy) {
         super(launcher);
         this.datacenterDescription = datacenterDescription;
         this.datacenterNode = datacenterNode;
@@ -78,8 +81,15 @@ public class VirtualMachineLauncher extends DelegatingComputerLauncher {
      */
     private Object readResolve() throws ObjectStreamException {
         if (delegate != null) {
-            return new VirtualMachineLauncher(delegate, datacenterDescription, datacenterNode, virtualMachineId,
-                    snapshotName, startVM, WAIT_TIME_MS / 1000, revertPolicy);
+            return new VirtualMachineLauncher(
+                    delegate,
+                    datacenterDescription,
+                    datacenterNode,
+                    virtualMachineId,
+                    snapshotName,
+                    startVM,
+                    WAIT_TIME_MS / 1000,
+                    revertPolicy);
         }
         return this;
     }
@@ -107,10 +117,10 @@ public class VirtualMachineLauncher extends DelegatingComputerLauncher {
 
     @Override
     public boolean isLaunchSupported() {
-        //TODO: Add this into the settings for node setup
+        // TODO: Add this into the settings for node setup
         boolean overrideLaunchSupported = launcher.isLaunchSupported();
-        //Support launching for the JNLPLauncher, so the `launch` function gets called
-        //and the VM can be reset to a snapshot.
+        // Support launching for the JNLPLauncher, so the `launch` function gets called
+        // and the VM can be reset to a snapshot.
         if (launcher instanceof JNLPLauncher) {
             overrideLaunchSupported = true;
         }
@@ -144,15 +154,17 @@ public class VirtualMachineLauncher extends DelegatingComputerLauncher {
             Connector pve = datacenter.proxmoxInstance();
 
             if (!snapshotName.equals("current")) {
-              taskListener.getLogger().println("Virtual machine \"" + virtualMachineId
-                  + "\" (Name \"" + slaveComputer.getDisplayName() + "\") is being reverted...");
-              //TODO: Check the status of this task (pass/fail) not just that its finished
-              taskId = pve.rollbackQemuMachineSnapshot(datacenterNode, virtualMachineId, snapshotName);
-              taskListener.getLogger().println("Proxmox returned: " + taskId);
+                taskListener
+                        .getLogger()
+                        .println("Virtual machine \"" + virtualMachineId + "\" (Name \""
+                                + slaveComputer.getDisplayName() + "\") is being reverted...");
+                // TODO: Check the status of this task (pass/fail) not just that its finished
+                taskId = pve.rollbackQemuMachineSnapshot(datacenterNode, virtualMachineId, snapshotName);
+                taskListener.getLogger().println("Proxmox returned: " + taskId);
 
-              //Wait for the task to finish
-              taskStatus = pve.waitForTaskToFinish(datacenterNode, taskId);
-              taskListener.getLogger().println("Task finished! Status object: " + taskStatus.toString());
+                // Wait for the task to finish
+                taskStatus = pve.waitForTaskToFinish(datacenterNode, taskId);
+                taskListener.getLogger().println("Task finished! Status object: " + taskStatus.toString());
             }
 
             if (startVM) {
@@ -163,14 +175,15 @@ public class VirtualMachineLauncher extends DelegatingComputerLauncher {
             taskListener.getLogger().println("ERROR: Login failed: " + e.getMessage());
         }
 
-        //Ignore the wait period for a JNLP agent as it connects back to the Jenkins instance.
+        // Ignore the wait period for a JNLP agent as it connects back to the Jenkins instance.
         if (!(launcher instanceof JNLPLauncher)) {
             Thread.sleep(waitingTimeSecs * 1000);
         }
     }
 
     @Override
-    public void launch(SlaveComputer slaveComputer, TaskListener taskListener) throws IOException, InterruptedException {
+    public void launch(SlaveComputer slaveComputer, TaskListener taskListener)
+            throws IOException, InterruptedException {
         if (revertPolicy == RevertPolicy.AFTER_CONNECT) {
             revertSnapshot(slaveComputer, taskListener);
         } else {
@@ -186,20 +199,25 @@ public class VirtualMachineLauncher extends DelegatingComputerLauncher {
         String taskId = null;
         JSONObject taskStatus = null;
 
-        //try to gracefully shutdown the virtual machine
+        // try to gracefully shutdown the virtual machine
         try {
-            taskListener.getLogger().println("Virtual machine \"" + virtualMachineId
-              + "\" (slave \"" + slaveComputer.getDisplayName() + "\") is being shutdown.");
+            taskListener
+                    .getLogger()
+                    .println("Virtual machine \"" + virtualMachineId + "\" (slave \"" + slaveComputer.getDisplayName()
+                            + "\") is being shutdown.");
             Datacenter datacenter = findDatacenterInstance();
             Connector pve = datacenter.proxmoxInstance();
             taskId = pve.shutdownQemuMachine(datacenterNode, virtualMachineId);
             taskStatus = pve.waitForTaskToFinish(datacenterNode, taskId);
             if (!taskStatus.getString("exitstatus").equals("OK")) {
-              //Graceful shutdown failed, so doing a stop.
-              taskListener.getLogger().println("Virtual machine \"" + virtualMachineId
-                  + "\" (slave \"" + slaveComputer.getDisplayName() + "\") was not able to shutdown, doing a stop instead");
-              taskId = pve.stopQemuMachine(datacenterNode, virtualMachineId);
-              taskStatus = pve.waitForTaskToFinish(datacenterNode, taskId);
+                // Graceful shutdown failed, so doing a stop.
+                taskListener
+                        .getLogger()
+                        .println("Virtual machine \"" + virtualMachineId + "\" (slave \""
+                                + slaveComputer.getDisplayName()
+                                + "\") was not able to shutdown, doing a stop instead");
+                taskId = pve.stopQemuMachine(datacenterNode, virtualMachineId);
+                taskStatus = pve.waitForTaskToFinish(datacenterNode, taskId);
             }
             taskListener.getLogger().println("Task finished! Status object: " + taskStatus.toString());
         } catch (InterruptedException e) {
@@ -211,10 +229,9 @@ public class VirtualMachineLauncher extends DelegatingComputerLauncher {
 
     @Override
     public void beforeDisconnect(SlaveComputer slaveComputer, TaskListener taskListener) {
-    	if(revertPolicy == RevertPolicy.AFTER_CONNECT)
-    		shutdown(slaveComputer, taskListener);
+        if (revertPolicy == RevertPolicy.AFTER_CONNECT) shutdown(slaveComputer, taskListener);
 
-    	super.beforeDisconnect(slaveComputer, taskListener);
+        super.beforeDisconnect(slaveComputer, taskListener);
     }
 
     @Override
