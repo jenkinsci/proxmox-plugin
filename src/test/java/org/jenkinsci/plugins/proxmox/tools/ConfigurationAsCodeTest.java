@@ -18,6 +18,7 @@ import io.jenkins.plugins.casc.ConfigurationContext;
 import io.jenkins.plugins.casc.ConfiguratorRegistry;
 import io.jenkins.plugins.casc.misc.ConfiguredWithCode;
 import io.jenkins.plugins.casc.misc.JenkinsConfiguredWithCodeRule;
+import io.jenkins.plugins.casc.misc.junit.jupiter.WithJenkinsConfiguredWithCode;
 import io.jenkins.plugins.casc.model.Mapping;
 import java.util.Arrays;
 import java.util.List;
@@ -25,17 +26,14 @@ import org.jenkinsci.plugins.proxmox.Datacenter;
 import org.jenkinsci.plugins.proxmox.VirtualMachineLauncher.RevertPolicy;
 import org.jenkinsci.plugins.proxmox.VirtualMachineSlave;
 import org.jenkinsci.plugins.proxmox.VirtualMachineSlaveComputer;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-public class ConfigurationAsCodeTest {
-
-    @ClassRule
-    @ConfiguredWithCode("configuration-as-code.yml")
-    public static JenkinsConfiguredWithCodeRule r = new JenkinsConfiguredWithCodeRule();
+@WithJenkinsConfiguredWithCode
+class ConfigurationAsCodeTest {
 
     @Test
-    public void should_support_configuration_as_code() {
+    @ConfiguredWithCode("configuration-as-code.yml")
+    void should_support_configuration_as_code(JenkinsConfiguredWithCodeRule r) {
         Datacenter cloud = (Datacenter) r.jenkins.clouds.get(0);
         assertThat(cloud.getHostname(), is("company-proxmox"));
         assertThat(cloud.getRealm(), is("pve"));
@@ -66,7 +64,8 @@ public class ConfigurationAsCodeTest {
     }
 
     @Test
-    public void should_support_configuration_export() throws Exception {
+    @ConfiguredWithCode("configuration-as-code.yml")
+    void should_support_configuration_export(JenkinsConfiguredWithCodeRule r) throws Exception {
         ConfiguratorRegistry registry = ConfiguratorRegistry.get();
         ConfigurationContext context = new ConfigurationContext(registry);
         final Mapping cloud =
